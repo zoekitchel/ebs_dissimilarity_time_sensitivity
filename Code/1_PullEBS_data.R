@@ -30,7 +30,7 @@ library(raster)
 FishGlob_1.5 <- fread("/Users/zoekitchel/Documents/grad_school/Rutgers/Repositories/trawl_spatial_turnover_git/data/FISHGLOB_v1.5_clean.csv")
 
 #######################
-##ANALYSIS
+##DATA PROCESSING
 #######################
 
 ##Restrict to EBS only

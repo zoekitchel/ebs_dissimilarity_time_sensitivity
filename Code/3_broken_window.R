@@ -22,6 +22,7 @@
 library(data.table)
 library(ggplot2)
 library(animation)
+library(RobustLinearReg)
 #######################
 ##DATA
 #######################
@@ -55,6 +56,28 @@ linefit<-function (data){
 #and try this on test data
 linefit(EBS.dissim.simp)
 # functional!
+
+#alternative line fit using Theil–Sen (what Olaf recommded) https://en.wikipedia.org/wiki/Theil%E2%80%93Sen_estimator
+
+linefit_theil<-function (data){
+  #fit the model
+  model<-theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data=data)
+  #create a vector of relevant outputs. We want slope, error, P value
+  output<-c(min(data$year), #year the analysis started on
+            nrow(data), #number of data points the analysis includes
+            length(unique(data$year)), #number of years the analysis includes
+            summary(model)$coefficients[2,1], # slope
+            summary(model)$coefficients[2,2], # se for slope
+            summary(model)$coefficients[2,4], #p value slope
+            summary(model)$coefficients[1,1], # intercept
+            summary(model)$coefficients[1,2], # se for intercept
+            summary(model)$coefficients[1,4], # p value for intercept
+            summary(model)$r.squared, #r-squared
+            summary(model)$adj.r.squared) #adjusted r-squared
+  return(output)
+}
+
+linefit_theil(EBS.dissim.simp)
 
 #now we need to think about how to iterate through the dataset. We want a
 #function that starts at the first year, counts the number of rows specified
@@ -464,11 +487,11 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
   plot<-plot+ ggtitle(title)+
     geom_abline(slope=true_slope, intercept=true_intercept, linetype=1, colour="grey16", size=1)+
     geom_point(size=3, pch=21, fill="grey22")+
-    xlab("Year")+ylab("Z-scaled response")
+    xlab("Year")+ylab("Dissimilarity")
   return(plot)
 }
 #test it
-broken_stick_plot(EBS.dissim.simp, window_length = 3, significance = 0.5)
+broken_stick_plot(EBS.dissim.simp, window_length = 32, significance = 0.5)
 
 #let's have a bit of fun and make an animated version of this plot
 
