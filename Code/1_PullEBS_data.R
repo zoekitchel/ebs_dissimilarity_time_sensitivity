@@ -5,11 +5,13 @@
 
 #######################
 ##VERSIONS##
+#######################
 #R 4.2.1 (2022-06-23) -- "Funny-Looking Kid"
 #macOS Big Sur 11.7
 
 #######################
 ##PACKAGES##
+#######################
 
 library(data.table)
 library(sf)
@@ -19,6 +21,7 @@ library(raster)
 
 #######################
 ##DATA##
+#######################
 
 #Pull in compiled and cleaned data from FishGlob, downloaded on November 28, 2022 (V 1.5) at 
 #(https:, , drive.google.com, file, d, 1MgXKhmIufUtjE_Y_mWpDeldJKfd7nDEM, view?usp=share_link). 
@@ -27,13 +30,15 @@ library(raster)
 FishGlob_1.5 <- fread("/Users/zoekitchel/Documents/grad_school/Rutgers/Repositories/trawl_spatial_turnover_git/data/FISHGLOB_v1.5_clean.csv")
 
 #######################
+##ANALYSIS
+#######################
+
 ##Restrict to EBS only
 EBS <- FishGlob_1.5[survey_unit == "EBS",]
 
 rm(FishGlob_1.5)
 
-#######################
-#Clean and Standardize to maintain sample footprint through time
+##Clean and Standardize to maintain sample footprint through time
 
 #Sampling years prior to 1984 (data begin in 1982) were excluded from analysis due
 #to large apparent increases in the number of species recorded in the first two years. 
