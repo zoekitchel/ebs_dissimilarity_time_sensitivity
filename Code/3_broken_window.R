@@ -1,5 +1,5 @@
 ###########################
-#Broken Window Script from Bahlai et al. 2021
+#Broken Window Script from Bahlai et al. 2021, and adapted by Zoë Kitchel for Eastern Bering Sea Dissimilarity Through Time
 
 # How does when you look, and how long, affect the conclusions you reach about your data?
 # Are short term studies more likely to yield significant results?
@@ -18,38 +18,25 @@
 
 #######################
 ##PACKAGES##
-
+#######################
+library(data.table)
+library(ggplot2)
+library(animation)
 #######################
 ##DATA
+#######################
+EBS.distances_dissimilarities_allyears.r <- fread(file.path("Output","EBS.distances_dissimilarities_allyears.r.csv"))
 
-# set it so we get our decimal places rather than sci notation in our outputs
-options(scipen=10)
 
-# technical things that need to be done:
+#simplified for BC balanced variation only
 
-# data needs to be normalized in some way because we will be operating across domains 
-# and likely with dramatically different values. Let's use a standardization approach so
-# we don't give undue influence to outliers but also gets responses in the same magnitude
-# something like x(standard)=(x-mean)/Stdev, the z score
-
-standardize<-function(data){
-  #operate on the second column in data, where our response variable is
-  data$stand.response<-(data[,2]-mean(data[,2]))/sd(data[,2])
-  #name the columns consistently so we don't get headaches later
-  names(data)<-c("year", "response", "stand.response")
-  #spit back our new data frame
-  return(data)
-}
-
-#try it on test data
-###test1<-standardize(test)
-#seems to be functioning
+EBS.dissim.simp <- EBS.distances_dissimilarities_allyears.r[,.(year, bray_curtis_dissimilarity_balanced_mean)]
 
 # next we need a function that runs a simple linear model of x=year, y=response variable
 
 linefit<-function (data){
   #fit the model
-  model<-lm(stand.response~year, data=data)
+  model<-lm(bray_curtis_dissimilarity_balanced_mean~year, data=data)
   #create a vector of relevant outputs. We want slope, error, P value
   output<-c(min(data$year), #year the analysis started on
             nrow(data), #number of data points the analysis includes
@@ -66,12 +53,12 @@ linefit<-function (data){
 }
 
 #and try this on test data
-###linefit(test1)
+linefit(EBS.dissim.simp)
 # functional!
 
 #now we need to think about how to iterate through the dataset. We want a
 #function that starts at the first year, counts the number of rows specified
-#and then feeds that rsultant data frame to the fittling function. 
+#and then feeds that resultant data frame to the fitting function. 
 #then we want to discard the first row of the data set, and repeat until fewer than
 #the number of rows specified remains
 
@@ -108,15 +95,14 @@ breakup<-function(data, window){ #window is the size of the window we want to us
 }
 
 #and now try this on the test data
-###breakup(test1, 3)
+breakup(EBS.dissim.simp, 3)
 
 # now time to write the function that will iterate through our targetted windows
 # let's make a decision rule that our test data set must be greater than 10y in length
 # let's make this idiot-proof and build the standardize function right into this function
 # so we can literally run each properly prepared raw data set with a single line
 
-multiple_breakups<-function(data){
-  data1<-standardize(data) #standardize data
+multiple_breakups<-function(data1){
   count<-length(data1$year)
   output<-data.frame(year=integer(0), #create empty data frame to put our output variables in
                      length=integer(0), 
@@ -137,12 +123,11 @@ multiple_breakups<-function(data){
   return(out)
 }
 
-###test2<-multiple_breakups(test)
+test2<-multiple_breakups(EBS.dissim.simp)
 #fan-flipping-tastic! it looks like that works
 
 
 #let's create a plotting function
-library(ggplot2)
 
 pyramid_plot<- function(data, title="", significance=0.05, plot_insig=TRUE, rsq_points=FALSE){
   out<-multiple_breakups(data)
@@ -183,7 +168,7 @@ pyramid_plot<- function(data, title="", significance=0.05, plot_insig=TRUE, rsq_
   return(plot)
 }
 
-###pyramid_plot(test, title="test plot", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot(EBS.dissim.simp, title="test plot", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 
 
 
@@ -219,9 +204,11 @@ stability_time<-function(data, min_percent=95, error_multiplyer=1){#returns a nu
 }
 
 #and a test
-###stability_time(test, error_multiplyer = 1)
+stability_time(EBS.dissim.simp, error_multiplyer = 1)
 
-#now a function that finds the absoloute range of findings, and the absolute 
+#19 years of observation in EBS to get reliable dissimilarity trend
+
+#now a function that finds the absolute range of findings, and the absolute 
 #range of significant findings
 
 abs_range<- function(data, only_significant=FALSE, significance=0.05){#returns a two unit vector with the max and min slopes
@@ -239,7 +226,7 @@ abs_range<- function(data, only_significant=FALSE, significance=0.05){#returns a
 }
 
 #and try it out
-###abs_range(test, only_significant = FALSE, significance = 0.05)
+abs_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
 
 #now we want to find the absolute over and under estimate compared to the slope of the 
 #longest series
@@ -260,7 +247,7 @@ relative_range<- function(data, only_significant=FALSE, significance=0.05){#retu
   
 }
 
-###relative_range(test, only_significant = FALSE, significance = 0.05)
+relative_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
 
 relative_range_after_stability<- function(data, only_significant=FALSE, significance=0.05){#returns a two unit vector with the max and min slopes
   test<-multiple_breakups(data)
@@ -280,7 +267,7 @@ relative_range_after_stability<- function(data, only_significant=FALSE, signific
   
 }
 
-###relative_range(test, only_significant = FALSE, significance = 0.05)
+relative_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
 
 #proportion significant- finds the proportion of total windows with statistically significant values
 
@@ -294,13 +281,13 @@ proportion_significant<- function(data, significance=0.05){#returns a single val
   
 }
 
-###proportion_significant(test, significance=0.05)
+proportion_significant(EBS.dissim.simp, significance=0.05)
 
 #proportion significantly wrong- we're going to define this as 'directionally wrong'
 #where there is a significant relationship that does not match the direction of the true slope
 
 
-proportion_wrong<- function(data, significance=0.05){#returns a single value between 0 and 1
+proportion_wrong <- function(data, significance=0.05){#returns a single value between 0 and 1
   test<-multiple_breakups(data)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
@@ -321,9 +308,9 @@ proportion_wrong<- function(data, significance=0.05){#returns a single value bet
   
 }
 
-###proportion_wrong(test, significance=0.01)
+proportion_wrong(EBS.dissim.simp, significance=0.01)
 
-
+#10% of the time, the slope is "significant" but is not the same as the "true" slope for 36 years
 
 #proportion wrong by series length- basically the same thing as proportion wrong but looped 
 #over all the unique window lengths. Will output a data frame with a window length and proportion
@@ -370,7 +357,7 @@ proportion_wrong_series<- function(data, significance=0.05){#returns a single va
 
 
 #test it
-###proportion_wrong_series(test, significance = 0.1)
+proportion_wrong_series(EBS.dissim.simp, significance = 0.1) #very cool!
 
 #proportion significantly wrong under stability time- we're going to define this as 'directionally wrong'
 #where there is a significant relationship that does not match the direction of the true slope
@@ -402,7 +389,7 @@ proportion_wrong_before_stability<- function(data, significance=0.05, min_percen
   
 }
 
-###proportion_wrong_before_stability(test, significance=0.05)
+proportion_wrong_before_stability(EBS.dissim.simp, significance=0.05)
 
 #implement another charting function that gives the proportion wrong by window length
 
@@ -437,12 +424,11 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
 }
 
 #test
-###wrongness_plot(test)
+wrongness_plot(EBS.dissim.simp)
 
 #now for a function that plots all the lines by window length
 
 broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
-  data1<-standardize(data)#standardize data for data frame
   out<-multiple_breakups(data)
   years<-length(unique(out$start_year))
   maxyears<-max(out$N_years)
@@ -456,7 +442,7 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
   countsig<-nrow(out_sig)#count the number of rows in the set we want to plot
   out_not<-out[which(out$p_value>significance),]
   countnot<-nrow(out_not)#count the number of rows in the set we want to plot
-  plot<- ggplot(data1, aes(x=year, y=stand.response)) +
+  plot<- ggplot(data, aes(x=year, y=bray_curtis_dissimilarity_balanced_mean)) +
     theme_classic()+geom_smooth(linetype=0, fill="lightblue1", method=lm, formula='y ~ x', 
                                 level=0.99)#99% confidence interval around longest series
   if(countnot>0){
@@ -482,10 +468,9 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
   return(plot)
 }
 #test it
-###broken_stick_plot(test, window_length = 4, significance = 0.5)
+broken_stick_plot(EBS.dissim.simp, window_length = 3, significance = 0.5)
 
 #let's have a bit of fun and make an animated version of this plot
-library(animation)
 
 
 make_stick_pile_gif<-function(data, significance=0.05){
@@ -499,4 +484,4 @@ make_stick_pile_gif<-function(data, significance=0.05){
     }
   }) 
 }
-###make_stick_pile_gif(test)
+make_stick_pile_gif(EBS.dissim.simp)
