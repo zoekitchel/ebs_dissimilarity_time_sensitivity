@@ -1,3 +1,7 @@
+#TO DO
+#See if Jim as shapefiles with domains, what I do here is a bit shady as there's some overlap among domains which I wouldn't expect
+
+
 ###########################
 #This script labels latlon tows as outer, middle, or inner domain in EBS
 
@@ -46,6 +50,9 @@ EBS.latlon <- unique(EBS.r[,.(longitude, latitude, depth)])
 
 #new column labeling depending on domain
 EBS.domains.r <- EBS.latlon[,domain := ifelse(depth <= 50,"Inner",ifelse(depth > 100,"Outer", "Middle"))]
+
+#merge back with full data
+EBS.domains.r.full <- EBS.r[EBS.domains.r, on =c("longitude","latitude","depth")]
 
 #create single polygon feature
 EBS.domains.sf <- st_as_sf(EBS.domains.r, coords=c("longitude","latitude"), crs = 4326)
@@ -98,9 +105,17 @@ Alaska_domains <- ggplot() +
 
 Alaska_domains
 
+#save map
 ggsave(Alaska_domains, path = file.path("Figures"),
-       filename = "Alaska_domains_map.jpg", height = 4, width = 5, units = "in")
+       filename = "Alaska_domains_map.jpg", height = 3, width = 5, units = "in")
+
+#save as grob
+saveRDS(Alaska_domains, file.path("Figures","Alaska_domains.Rds"))
 
 
+#######################
+##Save Data##
+#######################
+fwrite(EBS.domains.r.full, file.path("Data","EBS.domains.r.full.csv"))
 
-
+       
