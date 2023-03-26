@@ -34,7 +34,9 @@ stopifnot(
   nrow(unique(EBS.domains.r.full[,.(accepted_name, haul_id)])) == nrow(EBS.domains.r.full)
           )
 
-##Calculate dissimilarity values
+#calculate avg # haul ids per year domain and across all domains
+EBS.domains.r.full[, hauls_per_year := uniqueN(haul_id), .(year)][, avg_hauls_per_year := median(hauls_per_year)]
+EBS.domains.r.full[, hauls_per_year_bydomain := uniqueN(haul_id), .(year, domain)][, avg_hauls_per_year_bydomain := median(hauls_per_year_bydomain), domain]
 
 
 #list years
