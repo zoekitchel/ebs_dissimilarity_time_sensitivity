@@ -257,8 +257,8 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #to reach 'stability'-so let's define stability as >(some percentage of slopes) occuring within 
 #the standard deviation of the slope of the longest series, for a given window length, allow user to change # of SEs
 
-stability_time<-function(data, min_percent=95, error_multiplyer=1){#returns a number 
-  test<-multiple_breakups(data)
+stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm"){#returns a number 
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   #remember to convert standard error to standard deviation
@@ -286,13 +286,26 @@ stability_time<-function(data, min_percent=95, error_multiplyer=1){#returns a nu
 #and a test
 stability_time(EBS.dissim.simp, error_multiplyer = 1)
 
-#19 years of observation in EBS to get reliable dissimilarity trend
+#linear model
+stability_time(EBS.dissim.simp[domain == "Full"], error_multiplyer = 1) #21
+stability_time(EBS.dissim.simp[domain == "Inner"], error_multiplyer = 1) #22
+stability_time(EBS.dissim.simp[domain == "Outer"], error_multiplyer = 1) #26
+stability_time(EBS.dissim.simp[domain == "Middle"], error_multiplyer = 1) #22
+
+#theil
+stability_time(EBS.dissim.simp[domain == "Full"], error_multiplyer = 1, linear_model = "theil_sen_regression") #21
+stability_time(EBS.dissim.simp[domain == "Inner"], error_multiplyer = 1, linear_model = "theil_sen_regression") #21
+stability_time(EBS.dissim.simp[domain == "Outer"], error_multiplyer = 1, linear_model = "theil_sen_regression") #26
+stability_time(EBS.dissim.simp[domain == "Middle"], error_multiplyer = 1, linear_model = "theil_sen_regression") #22
+
+
+#21-26 years of observation in EBS to get reliable dissimilarity trend
 
 #now a function that finds the absolute range of findings, and the absolute 
 #range of significant findings
 
-abs_range<- function(data, only_significant=FALSE, significance=0.05){#returns a two unit vector with the max and min slopes
-  test<-multiple_breakups(data)
+abs_range<- function(data, only_significant=FALSE, significance=0.05, linear_model = "lm"){#returns a two unit vector with the max and min slopes
+  test<-multiple_breakups(data, linear_model = linear_model)
   if(only_significant== TRUE){ #if user specifies only significant values wanted, pull those
     test1<-test[which(test$p_value<significance),]
   }else{
@@ -306,13 +319,28 @@ abs_range<- function(data, only_significant=FALSE, significance=0.05){#returns a
 }
 
 #and try it out
-abs_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
+
+#linear model
+abs_range(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05)
+abs_range(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05)
+abs_range(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05)
+abs_range(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05)
+
+#theil
+abs_range(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+abs_range(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+abs_range(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+abs_range(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+
+
+
+
 
 #now we want to find the absolute over and under estimate compared to the slope of the 
 #longest series
 
-relative_range<- function(data, only_significant=FALSE, significance=0.05){#returns a two unit vector with the max and min slopes
-  test<-multiple_breakups(data)
+relative_range<- function(data, only_significant=FALSE, significance=0.05, linear_model = "lm"){#returns a two unit vector with the max and min slopes
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   if(only_significant== TRUE){ #if user specifies only significant values wanted, pull those
@@ -327,10 +355,23 @@ relative_range<- function(data, only_significant=FALSE, significance=0.05){#retu
   
 }
 
-relative_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
 
-relative_range_after_stability<- function(data, only_significant=FALSE, significance=0.05){#returns a two unit vector with the max and min slopes
-  test<-multiple_breakups(data)
+#linear model
+relative_range(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05)
+relative_range(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05)
+relative_range(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05)
+relative_range(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05)
+
+#theil
+relative_range(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+
+
+
+relative_range_after_stability<- function(data, only_significant=FALSE, significance=0.05, linear_model = "lm"){#returns a two unit vector with the max and min slopes
+  test<-multiple_breakups(data, linear_model = linear_model)
   stime<-stability_time(data)
   stest<-test[which(test$N_years>=stime),]
   count<-nrow(test)
@@ -347,12 +388,25 @@ relative_range_after_stability<- function(data, only_significant=FALSE, signific
   
 }
 
-relative_range(EBS.dissim.simp, only_significant = FALSE, significance = 0.05)
+##returns a two unit vector with the max and min slopes AFTER stability is reached
+#linear model
+relative_range_after_stability(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05)
+relative_range_after_stability(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05)
+relative_range_after_stability(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05)
+relative_range_after_stability(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05)
+
+#theil
+relative_range_after_stability(EBS.dissim.simp[domain == "Full"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range_after_stability(EBS.dissim.simp[domain == "Inner"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range_after_stability(EBS.dissim.simp[domain == "Outer"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+relative_range_after_stability(EBS.dissim.simp[domain == "Middle"], only_significant = F, significance = 0.05, linear_model = "theil_sen_regression")
+
+
 
 #proportion significant- finds the proportion of total windows with statistically significant values
 
-proportion_significant<- function(data, significance=0.05){#returns a single value between 0 and 1
-  test<-multiple_breakups(data)
+proportion_significant<- function(data, significance=0.05, linear_model = "lm"){#returns a single value between 0 and 1
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   significant_regressions<-test[which(test$p_value<significance),]
   count_sig<-nrow(significant_regressions)
@@ -361,14 +415,24 @@ proportion_significant<- function(data, significance=0.05){#returns a single val
   
 }
 
-proportion_significant(EBS.dissim.simp, significance=0.05)
+#linear model
+proportion_significant(EBS.dissim.simp[domain == "Full"], significance = 0.05)
+proportion_significant(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
+proportion_significant(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
+proportion_significant(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
+
+#theil
+proportion_significant(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_significant(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_significant(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_significant(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
 
 #proportion significantly wrong- we're going to define this as 'directionally wrong'
 #where there is a significant relationship that does not match the direction of the true slope
 
 
-proportion_wrong <- function(data, significance=0.05){#returns a single value between 0 and 1
-  test<-multiple_breakups(data)
+proportion_wrong <- function(data, significance=0.05, linear_model = "lm"){#returns a single value between 0 and 1
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   true_p<-test[count,6]
@@ -388,16 +452,27 @@ proportion_wrong <- function(data, significance=0.05){#returns a single value be
   
 }
 
-proportion_wrong(EBS.dissim.simp, significance=0.01)
+#linear model
+proportion_wrong(EBS.dissim.simp[domain == "Full"], significance = 0.05)
+proportion_wrong(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
+proportion_wrong(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
+proportion_wrong(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
 
-#10% of the time, the slope is "significant" but is not the same as the "true" slope for 36 years
+#theil
+proportion_wrong(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
+
+
+#14% - 38% of the time, the slope is "significant" but is not the same as the "true" slope for 36 years
 
 #proportion wrong by series length- basically the same thing as proportion wrong but looped 
 #over all the unique window lengths. Will output a data frame with a window length and proportion
 #of outputs are significantly misleading, plus average r square for that window length
 
-proportion_wrong_series<- function(data, significance=0.05){#returns a single value between 0 and 1
-  test<-multiple_breakups(data)
+proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm"){#returns a single value between 0 and 1
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   true_p<-test[count,6]
@@ -429,22 +504,50 @@ proportion_wrong_series<- function(data, significance=0.05){#returns a single va
   y_name <- "proportion_wrong"
   z_name <- "avg_r_square"
   
-  df <- data.frame(windows, prop.vec, r.vec)
-  names(df) <- c(x_name, y_name, z_name)
-  return(df)
+  dt <- data.table(windows, prop.vec, r.vec)
+  names(dt) <- c(x_name, y_name, z_name)
+  return(dt)
   
 }
 
 
 #test it
-proportion_wrong_series(EBS.dissim.simp, significance = 0.1) #very cool!
 
+#linear model
+
+proportion_wrong_series_full_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Full"], significance = 0.05)
+proportion_wrong_series_full_lm[,domain := "Full"][,linear_model = "lm"]
+proportion_wrong_series_inner_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
+proportion_wrong_series_inner_lm[,domain := "Inner"][,linear_model = "lm"]
+proportion_wrong_series_outer_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
+proportion_wrong_series_outer_lm[,domain := "Outer"][,linear_model = "lm"]
+proportion_wrong_series_middle_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
+proportion_wrong_series_middle_lm[,domain := "Middle"][,linear_model = "lm"]
+#theil
+
+proportion_wrong_series_full_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong_series_full_theil_sen[,domain := "Full"][,linear_model = "theil_sen"]
+proportion_wrong_series_inner_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong_series_inner_theil_sen[,domain := "Inner"][,linear_model = "theil_sen"]
+proportion_wrong_series_outer_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong_series_outer_theil_sen[,domain := "Outer"][,linear_model = "theil_sen"]
+proportion_wrong_series_middle_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
+proportion_wrong_series_middle_theil_sen[,domain := "Middle"][,linear_model = "theil_sen"]
 #proportion significantly wrong under stability time- we're going to define this as 'directionally wrong'
 #where there is a significant relationship that does not match the direction of the true slope
 
-proportion_wrong_before_stability<- function(data, significance=0.05, min_percent=95, error_multiplyer=1){#returns a single value between 0 and 1
+proportion_wrong_series_all<-rbind(proportion_wrong_series_full_lm,
+  proportion_wrong_series_full_theil_sen, proportion_wrong_series_inner_lm,
+  proportion_wrong_series_inner_theil_sen, proportion_wrong_series_middle_lm,
+  proportion_wrong_series_middle_theil_sen, proportion_wrong_series_outer_lm,
+  proportion_wrong_series_outer_theil_sen)
+
+#proportion wrong before stability
+proportion_wrong_before_stability<- function(data, significance=0.05,
+                                             min_percent=95, error_multiplyer=1,
+                                             linear_model = "lm"){#returns a single value between 0 and 1
   
-  test<-multiple_breakups(data)
+  test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   true_p<-test[count,6]
@@ -469,12 +572,23 @@ proportion_wrong_before_stability<- function(data, significance=0.05, min_percen
   
 }
 
-proportion_wrong_before_stability(EBS.dissim.simp, significance=0.05)
+#linear model
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Full"], significance = 0.05) #27%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Inner"], significance = 0.05) #14%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Outer"], significance = 0.05) #39%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Middle"], significance = 0.05) #33%
+
+#theil
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression") #26%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression") #14%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression") #35%
+proportion_wrong_before_stability(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression") #32%
+
 
 #implement another charting function that gives the proportion wrong by window length
 
-wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title =""){
-  threshold<-stability_time(data, min_percent, error_multiplyer)#find stability threshold
+wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm"){
+  threshold<-stability_time(data, min_percent, error_multiplyer, linear_model = linear_model)#find stability threshold
   wrongness<-proportion_wrong_series(data, significance)
   maxyears<-max(wrongness$window_length)
   plot<- ggplot(wrongness) +
@@ -504,7 +618,57 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
 }
 
 #test
-wrongness_plot(EBS.dissim.simp)
+#linear model
+wrongness_plot(EBS.dissim.simp[domain == "Full"], significance = 0.05)
+wrongness_plot(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
+wrongness_plot(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
+wrongness_plot(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
+
+#theil
+wrongness_plot(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
+wrongness_plot(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
+wrongness_plot(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
+wrongness_plot(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
+
+
+
+
+#linear model
+wrongness_plot_full_lm <- wrongness_plot(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05)
+ggsave(wrongness_plot_full_lm, path = file.path("Figures"), filename = "wrongness_plot_full_lm.jpg")
+wrongness_plot_inner_lm <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], title="Inner domain, lm()", significance=0.05)
+ggsave(wrongness_plot_inner_lm, path = file.path("Figures"), filename = "wrongness_plot_inner_lm.jpg")
+wrongness_plot_outer_lm <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], title="Outer domain, lm()", significance=0.05)
+ggsave(wrongness_plot_outer_lm, path = file.path("Figures"), filename = "wrongness_plot_outer_lm.jpg")
+wrongness_plot_middle_lm <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], title="Middle domain, lm()", significance=0.05)
+ggsave(wrongness_plot_middle_lm, path = file.path("Figures"), filename = "wrongness_plot_middle_lm.jpg")
+
+#theil sein
+wrongness_plot_full_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", title="Full EBS, theil sen", significance=0.05)
+ggsave(wrongness_plot_full_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_full_theil_sen.jpg")
+wrongness_plot_inner_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", title="Inner domain, theil sen", significance=0.05)
+ggsave(wrongness_plot_inner_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_inner_theil_sen.jpg")
+wrongness_plot_outer_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", title="Outer domain, theil sen", significance=0.05)
+ggsave(wrongness_plot_outer_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_outer_theil_sen.jpg")
+wrongness_plot_middle_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", title="Middle domain, theil sen", significance=0.05)
+ggsave(wrongness_plot_middle_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_middle_theil_sen.jpg")
+
+#merge into one figure
+wrongness_plot_merge <- plot_grid(
+  wrongness_plot_full_lm  +  theme(legend.position = c(0.3, 0.7), axis.title.x = element_blank()), 
+  wrongness_plot_inner_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_outer_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_middle_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_full_theil_sen  + theme(legend.position = "null"), 
+  wrongness_plot_inner_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_outer_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_middle_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()),
+  ncol = 4, nrow = 2)
+
+ggsave(wrongness_plot_merge, path = file.path("Figures"),
+       filename = "wrongness_plot_merge.jpg", height = 8, width = 15, unit = "in")
+
+
 
 #now for a function that plots all the lines by window length
 
