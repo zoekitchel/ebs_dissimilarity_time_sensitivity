@@ -1,5 +1,5 @@
 ###########################
-#Broken Window Script from Bahlai et al. 2021, and adapted by Zoë Kitchel for Eastern Bering Sea Dissimilarity Through Time
+#Broken Window Script from Bahlai et al. 2021, and adapted by Zoë Kitchel for Eastern Bering Sea β diversity (dissimilarity) Through Time
 
 # How does when you look, and how long, affect the conclusions you reach about your data?
 # Are short term studies more likely to yield significant results?
@@ -217,39 +217,78 @@ pyramid_plot<- function(data, title="", significance=0.05, plot_insig=TRUE, rsq_
 #linear model
 pyramid_plot_full_lm <- pyramid_plot(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_full_lm, path = file.path("Figures"), filename = "pyramid_plot_full_lm.jpg")
-pyramid_plot_inner_lm <- pyramid_plot(EBS.dissim.simp[domain == "Inner"], title="Inner domain, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_inner_lm <- pyramid_plot(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_inner_lm, path = file.path("Figures"), filename = "pyramid_plot_inner_lm.jpg")
-pyramid_plot_outer_lm <- pyramid_plot(EBS.dissim.simp[domain == "Outer"], title="Outer domain, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_outer_lm <- pyramid_plot(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_outer_lm, path = file.path("Figures"), filename = "pyramid_plot_outer_lm.jpg")
-pyramid_plot_middle_lm <- pyramid_plot(EBS.dissim.simp[domain == "Middle"], title="Middle domain, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_middle_lm <- pyramid_plot(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_middle_lm, path = file.path("Figures"), filename = "pyramid_plot_middle_lm.jpg")
 
 #theil sein
 pyramid_plot_full_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", title="Full EBS, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_full_theil_sen, path = file.path("Figures"), filename = "pyramid_plot_full_theil_sen.jpg")
-pyramid_plot_inner_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", title="Inner domain, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_inner_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", title="Inner EBS, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_inner_theil_sen, path = file.path("Figures"), filename = "pyramid_plot_inner_theil_sen.jpg")
-pyramid_plot_outer_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", title="Outer domain, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_outer_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", title="Outer EBS, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_outer_theil_sen, path = file.path("Figures"), filename = "pyramid_plot_outer_theil_sen.jpg")
-pyramid_plot_middle_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", title="Middle domain, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
+pyramid_plot_middle_theil_sen <- pyramid_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", title="Middle EBS, theil sen", plot_insig = TRUE, significance=0.05, rsq_points =TRUE)
 ggsave(pyramid_plot_middle_theil_sen, path = file.path("Figures"), filename = "pyramid_plot_middle_theil_sen.jpg")
 
 #merge into one figure
 pyramid_plot_merge <- plot_grid(
-  pyramid_plot_full_lm + lims(y = c(-0.12, 0.06)) +  theme(legend.position = c(0.3, 0.7), axis.title.x = element_blank()), 
-  pyramid_plot_inner_lm + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  pyramid_plot_outer_lm + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  pyramid_plot_middle_lm + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  pyramid_plot_full_theil_sen + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null"), 
-  pyramid_plot_inner_theil_sen + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  pyramid_plot_outer_theil_sen + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  pyramid_plot_middle_theil_sen + lims(y = c(-0.12, 0.06)) + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()),
+  #lm (top left)
+  pyramid_plot_full_lm + lims(y = c(-0.12, 0.06)) +  
+        theme(plot.title = element_text(face = "bold", color = "black"), 
+              legend.position = c(0.3, 0.65), legend.key.size = unit(0.5, unit = "cm"), legend.title = element_text(size = 16), legend.text = element_text(size = 16),
+              axis.title.x = element_blank(), axis.text.x = element_text(size = 16), axis.text.y = element_text(size = 16), axis.title.y = element_text(size = 16)), 
+  
+  
+  pyramid_plot_inner_lm + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#AA4499"), 
+              legend.position = "null", 
+              axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16)), 
+  
+  
+  pyramid_plot_middle_lm + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#44AA99"), 
+              legend.position = "null", 
+              axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16)), 
+  
+  
+  pyramid_plot_outer_lm + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#999933"), 
+              legend.position = "null", 
+              axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16)), 
+  
+  #theil sen (bottom left)
+  pyramid_plot_full_theil_sen + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "black"), 
+              legend.position = "null", 
+              axis.text.x = element_text(size = 16), axis.title.x = element_text(size = 16), axis.title.y = element_text(size = 16)), 
+  
+  
+  pyramid_plot_inner_theil_sen + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#AA4499"), 
+              legend.position = "null", 
+              axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16), axis.title.x = element_text(size = 16)), 
+  
+  
+  pyramid_plot_middle_theil_sen + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#44AA99"), 
+              legend.position = "null", 
+              axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16), axis.title.x = element_text(size = 16)),
+  
+  #bottom right
+  pyramid_plot_outer_theil_sen + lims(y = c(-0.12, 0.06)) + 
+        theme(plot.title = element_text(face = "bold", color = "#999933"), 
+              legend.position = "null", 
+              axis.text.y = element_blank(), axis.title.y = element_blank(), axis.text.x = element_text(size = 16), axis.title.x = element_text(size = 16)), 
+  
+  
   ncol = 4, nrow = 2)
 
 ggsave(pyramid_plot_merge, path = file.path("Figures"),
        filename = "pyramid_plot_merge.jpg", height = 8, width = 15, unit = "in")
-
-
 
 
 #now that we have visualization, we need a way to pull relevant metrics out of the computation
@@ -516,23 +555,24 @@ proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm")
 #linear model
 
 proportion_wrong_series_full_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Full"], significance = 0.05)
-proportion_wrong_series_full_lm[,domain := "Full"][,linear_model = "lm"]
+proportion_wrong_series_full_lm[,domain := "Full"][,linear_model := "lm"]
 proportion_wrong_series_inner_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
-proportion_wrong_series_inner_lm[,domain := "Inner"][,linear_model = "lm"]
+proportion_wrong_series_inner_lm[,domain := "Inner"][,linear_model := "lm"]
 proportion_wrong_series_outer_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
-proportion_wrong_series_outer_lm[,domain := "Outer"][,linear_model = "lm"]
+proportion_wrong_series_outer_lm[,domain := "Outer"][,linear_model := "lm"]
 proportion_wrong_series_middle_lm <- proportion_wrong_series(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
-proportion_wrong_series_middle_lm[,domain := "Middle"][,linear_model = "lm"]
+proportion_wrong_series_middle_lm[,domain := "Middle"][,linear_model := "lm"]
+
 #theil
 
 proportion_wrong_series_full_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
-proportion_wrong_series_full_theil_sen[,domain := "Full"][,linear_model = "theil_sen"]
+proportion_wrong_series_full_theil_sen[,domain := "Full"][,linear_model := "theil_sen"]
 proportion_wrong_series_inner_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
-proportion_wrong_series_inner_theil_sen[,domain := "Inner"][,linear_model = "theil_sen"]
+proportion_wrong_series_inner_theil_sen[,domain := "Inner"][,linear_model := "theil_sen"]
 proportion_wrong_series_outer_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
-proportion_wrong_series_outer_theil_sen[,domain := "Outer"][,linear_model = "theil_sen"]
+proportion_wrong_series_outer_theil_sen[,domain := "Outer"][,linear_model := "theil_sen"]
 proportion_wrong_series_middle_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
-proportion_wrong_series_middle_theil_sen[,domain := "Middle"][,linear_model = "theil_sen"]
+proportion_wrong_series_middle_theil_sen[,domain := "Middle"][,linear_model := "theil_sen"]
 #proportion significantly wrong under stability time- we're going to define this as 'directionally wrong'
 #where there is a significant relationship that does not match the direction of the true slope
 
@@ -617,52 +657,38 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
   return(plot)
 }
 
-#test
-#linear model
-wrongness_plot(EBS.dissim.simp[domain == "Full"], significance = 0.05)
-wrongness_plot(EBS.dissim.simp[domain == "Inner"], significance = 0.05)
-wrongness_plot(EBS.dissim.simp[domain == "Outer"], significance = 0.05)
-wrongness_plot(EBS.dissim.simp[domain == "Middle"], significance = 0.05)
 
-#theil
-wrongness_plot(EBS.dissim.simp[domain == "Full"], significance = 0.05, linear_model = "theil_sen_regression")
-wrongness_plot(EBS.dissim.simp[domain == "Inner"], significance = 0.05, linear_model = "theil_sen_regression")
-wrongness_plot(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear_model = "theil_sen_regression")
-wrongness_plot(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
-
-
-
-
+#plot
 #linear model
 wrongness_plot_full_lm <- wrongness_plot(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05)
 ggsave(wrongness_plot_full_lm, path = file.path("Figures"), filename = "wrongness_plot_full_lm.jpg")
-wrongness_plot_inner_lm <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], title="Inner domain, lm()", significance=0.05)
+wrongness_plot_inner_lm <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05)
 ggsave(wrongness_plot_inner_lm, path = file.path("Figures"), filename = "wrongness_plot_inner_lm.jpg")
-wrongness_plot_outer_lm <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], title="Outer domain, lm()", significance=0.05)
+wrongness_plot_outer_lm <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05)
 ggsave(wrongness_plot_outer_lm, path = file.path("Figures"), filename = "wrongness_plot_outer_lm.jpg")
-wrongness_plot_middle_lm <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], title="Middle domain, lm()", significance=0.05)
+wrongness_plot_middle_lm <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05)
 ggsave(wrongness_plot_middle_lm, path = file.path("Figures"), filename = "wrongness_plot_middle_lm.jpg")
 
 #theil sein
 wrongness_plot_full_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", title="Full EBS, theil sen", significance=0.05)
 ggsave(wrongness_plot_full_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_full_theil_sen.jpg")
-wrongness_plot_inner_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", title="Inner domain, theil sen", significance=0.05)
+wrongness_plot_inner_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", title="Inner EBS, theil sen", significance=0.05)
 ggsave(wrongness_plot_inner_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_inner_theil_sen.jpg")
-wrongness_plot_outer_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", title="Outer domain, theil sen", significance=0.05)
+wrongness_plot_outer_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", title="Outer EBS, theil sen", significance=0.05)
 ggsave(wrongness_plot_outer_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_outer_theil_sen.jpg")
-wrongness_plot_middle_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", title="Middle domain, theil sen", significance=0.05)
+wrongness_plot_middle_theil_sen <- wrongness_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", title="Middle EBS, theil sen", significance=0.05)
 ggsave(wrongness_plot_middle_theil_sen, path = file.path("Figures"), filename = "wrongness_plot_middle_theil_sen.jpg")
 
 #merge into one figure
 wrongness_plot_merge <- plot_grid(
-  wrongness_plot_full_lm  +  theme(legend.position = c(0.3, 0.7), axis.title.x = element_blank()), 
-  wrongness_plot_inner_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  wrongness_plot_outer_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  wrongness_plot_middle_lm  + theme(legend.position = "null", axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  wrongness_plot_full_theil_sen  + theme(legend.position = "null"), 
-  wrongness_plot_inner_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  wrongness_plot_outer_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()), 
-  wrongness_plot_middle_theil_sen  + theme(legend.position = "null", axis.text.y = element_blank(), axis.title.y = element_blank()),
+  wrongness_plot_full_lm  +  theme(plot.title = element_text(face = "bold", color = "black"), legend.key.size =unit(0.5, unit = "cm"), legend.position = c(0.3, 0.7), axis.title.x = element_blank(), text = element_text(size = 14)), 
+  wrongness_plot_inner_lm  + theme(plot.title = element_text(face = "bold", color = "#AA4499"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_middle_lm  + theme(plot.title = element_text(face = "bold", color = "#44AA99"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_outer_lm  + theme(plot.title = element_text(face = "bold", color = "#999933"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.title.x = element_blank(), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_full_theil_sen  + theme(plot.title = element_text(face = "bold", color = "black"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null", text = element_text(size = 14)), 
+  wrongness_plot_inner_theil_sen  + theme(plot.title = element_text(face = "bold", color = "#AA4499"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.text.y = element_blank(), axis.title.y = element_blank()), 
+  wrongness_plot_middle_theil_sen  + theme(plot.title = element_text(face = "bold", color = "#44AA99"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.text.y = element_blank(), axis.title.y = element_blank()),
+  wrongness_plot_outer_theil_sen  + theme(plot.title = element_text(face = "bold", color = "#999933"), legend.key.size =unit(0.5, unit = "cm"), legend.position = "null",  text = element_text(size = 14), axis.text.y = element_blank(), axis.title.y = element_blank()), 
   ncol = 4, nrow = 2)
 
 ggsave(wrongness_plot_merge, path = file.path("Figures"),
@@ -672,8 +698,8 @@ ggsave(wrongness_plot_merge, path = file.path("Figures"),
 
 #now for a function that plots all the lines by window length
 
-broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
-  out<-multiple_breakups(data)
+broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, linear_model = "lm"){
+  out<-multiple_breakups(data, linear_model = linear_model)
   years<-length(unique(out$start_year))
   maxyears<-max(out$N_years)
   count<-nrow(out)
@@ -708,24 +734,154 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3){
   plot<-plot+ ggtitle(title)+
     geom_abline(slope=true_slope, intercept=true_intercept, linetype=1, colour="grey16", size=1)+
     geom_point(size=3, pch=21, fill="grey22")+
-    xlab("Year")+ylab("Dissimilarity")
+    xlab("Year")+ylab("β diversity")
   return(plot)
 }
 #test it
 broken_stick_plot(EBS.dissim.simp, window_length = 32, significance = 0.5)
 
-#let's have a bit of fun and make an animated version of this plot
 
 
-make_stick_pile_gif<-function(data, significance=0.05){
-  out<-multiple_breakups(data)
-  windows<-unique(out$N_years)#get a list of unique window lengths
-  saveGIF({
-    for (i in 1:length(windows)) {
-      window_length_i<-windows[i]
-      print(broken_stick_plot(data, significance=significance, window_length = window_length_i, 
-                              title=paste("Window length =", window_length_i)))
-    }
-  }) 
-}
-make_stick_pile_gif(EBS.dissim.simp)
+
+
+
+#linear model
+  #window length 3
+  broken_stick_plot_w3_full_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], window_length = 3, title="Full EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w3_full_lm, path = file.path("Figures"), filename = "broken_stick_plot_w3_full_lm.jpg")
+  broken_stick_plot_w3_inner_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], window_length = 3, title="Inner EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w3_inner_lm, path = file.path("Figures"), filename = "broken_stick_plot_w3_inner_lm.jpg")
+  broken_stick_plot_w3_outer_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], window_length = 3, title="Outer EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w3_outer_lm, path = file.path("Figures"), filename = "broken_stick_plot_w3_outer_lm.jpg")
+  broken_stick_plot_w3_middle_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], window_length = 3, title="Middle EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w3_middle_lm, path = file.path("Figures"), filename = "broken_stick_plot_w3_middle_lm.jpg")
+  
+  #window length 10
+  broken_stick_plot_w10_full_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], window_length = 10, title="Full EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w10_full_lm, path = file.path("Figures"), filename = "broken_stick_plot_w10_full_lm.jpg")
+  broken_stick_plot_w10_inner_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], window_length = 10, title="Inner EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w10_inner_lm, path = file.path("Figures"), filename = "broken_stick_plot_w10_inner_lm.jpg")
+  broken_stick_plot_w10_outer_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], window_length = 10, title="Outer EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w10_outer_lm, path = file.path("Figures"), filename = "broken_stick_plot_w10_outer_lm.jpg")
+  broken_stick_plot_w10_middle_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], window_length = 10, title="Middle EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w10_middle_lm, path = file.path("Figures"), filename = "broken_stick_plot_w10_middle_lm.jpg")
+  
+  #window length 20
+  broken_stick_plot_w20_full_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], window_length = 20, title="Full EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w20_full_lm, path = file.path("Figures"), filename = "broken_stick_plot_w20_full_lm.jpg")
+  broken_stick_plot_w20_inner_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], window_length = 20, title="Inner EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w20_inner_lm, path = file.path("Figures"), filename = "broken_stick_plot_w20_inner_lm.jpg")
+  broken_stick_plot_w20_outer_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], window_length = 20, title="Outer EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w20_outer_lm, path = file.path("Figures"), filename = "broken_stick_plot_w20_outer_lm.jpg")
+  broken_stick_plot_w20_middle_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], window_length = 20, title="Middle EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w20_middle_lm, path = file.path("Figures"), filename = "broken_stick_plot_w20_middle_lm.jpg")
+  
+  #window length 30
+  broken_stick_plot_w30_full_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], window_length = 30, title="Full EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w30_full_lm, path = file.path("Figures"), filename = "broken_stick_plot_w30_full_lm.jpg")
+  broken_stick_plot_w30_inner_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], window_length = 30, title="Inner EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w30_inner_lm, path = file.path("Figures"), filename = "broken_stick_plot_w30_inner_lm.jpg")
+  broken_stick_plot_w30_outer_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], window_length = 30, title="Outer EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w30_outer_lm, path = file.path("Figures"), filename = "broken_stick_plot_w30_outer_lm.jpg")
+  broken_stick_plot_w30_middle_lm <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], window_length = 30, title="Middle EBS, lm()", significance=0.05)
+  ggsave(broken_stick_plot_w30_middle_lm, path = file.path("Figures"), filename = "broken_stick_plot_w30_middle_lm.jpg")
+
+#theil sein
+  #window length 3
+  broken_stick_plot_w3_full_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], window_length = 3, linear_model = "theil_sen_regression", title="Full EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w3_full_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w3_full_theil_sen.jpg")
+  broken_stick_plot_w3_inner_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], window_length = 3, linear_model = "theil_sen_regression", title="Inner EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w3_inner_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w3_inner_theil_sen.jpg")
+  broken_stick_plot_w3_outer_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], window_length = 3, linear_model = "theil_sen_regression", title="Outer EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w3_outer_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w3_outer_theil_sen.jpg")
+  broken_stick_plot_w3_middle_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], window_length = 3, linear_model = "theil_sen_regression", title="Middle EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w3_middle_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w3_middle_theil_sen.jpg")
+
+  #window length 10
+  broken_stick_plot_w10_full_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", window_length = 10, title="Full EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w10_full_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w10_full_theil_sen.jpg")
+  broken_stick_plot_w10_inner_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", window_length = 10, title="Inner EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w10_inner_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w10_inner_theil_sen.jpg")
+  broken_stick_plot_w10_outer_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", window_length = 10, title="Outer EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w10_outer_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w10_outer_theil_sen.jpg")
+  broken_stick_plot_w10_middle_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", window_length = 10, title="Middle EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w10_middle_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w10_middle_theil_sen.jpg")
+  
+  #window length 20
+  broken_stick_plot_w20_full_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", window_length = 20, title="Full EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w20_full_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w20_full_theil_sen.jpg")
+  broken_stick_plot_w20_inner_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", window_length = 20, title="Inner EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w20_inner_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w20_inner_theil_sen.jpg")
+  broken_stick_plot_w20_outer_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", window_length = 20, title="Outer EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w20_outer_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w20_outer_theil_sen.jpg")
+  broken_stick_plot_w20_middle_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", window_length = 20, title="Middle EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w20_middle_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w20_middle_theil_sen.jpg")
+  
+  #window length 30
+  broken_stick_plot_w30_full_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression", window_length = 30, title="Full EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w30_full_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w30_full_theil_sen.jpg")
+  broken_stick_plot_w30_inner_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression", window_length = 30, title="Inner EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w30_inner_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w30_inner_theil_sen.jpg")
+  broken_stick_plot_w30_outer_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression", window_length = 30, title="Outer EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w30_outer_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w30_outer_theil_sen.jpg")
+  broken_stick_plot_w30_middle_theil_sen <- broken_stick_plot(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression", window_length = 30, title="Middle EBS, theil sen", significance=0.05)
+  ggsave(broken_stick_plot_w30_middle_theil_sen, path = file.path("Figures"), filename = "broken_stick_plot_w30_middle_theil_sen.jpg")
+  
+#merge into one figure
+  #lm
+broken_stick_plot_merge_lm <- plot_grid(
+                                      #top row
+                                      broken_stick_plot_w3_full_lm + ggtitle("Full EBS") + ylab("3-year window\nβ diversity") + theme(plot.title = element_text(face = "bold", color = "black"), text = element_text(size = 20), axis.title.x = element_blank()),
+                                     broken_stick_plot_w3_inner_lm + ggtitle("Inner EBS") + theme(plot.title = element_text(face = "bold", color = "#AA4499"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+                                     broken_stick_plot_w3_middle_lm + ggtitle("Middle EBS") + theme(plot.title = element_text(face = "bold", color = "#44AA99"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+                                     broken_stick_plot_w3_outer_lm + ggtitle("Outer EBS") + theme(plot.title = element_text(face = "bold", color = "#999933"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+                                     #second row
+                                     broken_stick_plot_w10_full_lm + ylab("10-year window\nβ diversity") + theme(text = element_text(size = 20), axis.title.x = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w10_inner_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w10_middle_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w10_outer_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     #third row
+                                     broken_stick_plot_w20_full_lm + ylab("20-year window\nβ diversity") + theme(text = element_text(size = 20), axis.title.x = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w20_inner_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w20_middle_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w20_outer_lm + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     #fourth row
+                                     broken_stick_plot_w30_full_lm + ylab("30-year window\nβ diversity") + theme(text = element_text(size = 20), plot.title = element_blank()),
+                                     broken_stick_plot_w30_inner_lm + theme(text = element_text(size = 20), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w30_middle_lm + theme(text = element_text(size = 20), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     broken_stick_plot_w30_outer_lm + theme(text = element_text(size = 20), axis.title.y = element_blank(), plot.title = element_blank()),
+                                     ncol = 4, nrow = 4)
+
+ggsave(broken_stick_plot_merge_lm, path = file.path("Figures"),
+       filename = "broken_stick_plot_merge_lm.jpg", height = 15, width = 22, unit = "in")
+
+
+
+
+ #theil sen
+
+broken_stick_plot_merge_theil_sen <- plot_grid(
+  #top row
+  broken_stick_plot_w3_full_theil_sen + ggtitle("Full EBS") + ylab("3-year window\nβ diversity") + theme(plot.title = element_text(face = "bold", color = "black"), text = element_text(size = 20), axis.title.x = element_blank()),
+  broken_stick_plot_w3_inner_theil_sen + ggtitle("Inner EBS") + theme(plot.title = element_text(face = "bold", color = "#AA4499"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+  broken_stick_plot_w3_middle_theil_sen + ggtitle("Middle EBS") + theme(plot.title = element_text(face = "bold", color = "#44AA99"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+  broken_stick_plot_w3_outer_theil_sen + ggtitle("Outer EBS") + theme(plot.title = element_text(face = "bold", color = "#999933"), text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank()),
+  #second row
+  broken_stick_plot_w10_full_theil_sen + ylab("10-year window\nβ diversity") + theme(text = element_text(size = 20), axis.title.x = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w10_inner_theil_sen + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w10_middle_theil_sen + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w10_outer_theil_sen + theme(text = element_text(size = 20), axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  #third row
+  broken_stick_plot_w20_full_theil_sen + ylab("20-year window\nβ diversity") + theme(axis.title.x = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w20_inner_theil_sen + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w20_middle_theil_sen + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w20_outer_theil_sen + theme(axis.title.x = element_blank(), axis.title.y = element_blank(), plot.title = element_blank()),
+  #fourth row
+  broken_stick_plot_w30_full_theil_sen + ylab("30-year window\nβ diversity") + theme(plot.title = element_blank()),
+  broken_stick_plot_w30_inner_theil_sen + theme(axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w30_middle_theil_sen + theme(axis.title.y = element_blank(), plot.title = element_blank()),
+  broken_stick_plot_w30_outer_theil_sen + theme(axis.title.y = element_blank(), plot.title = element_blank()),
+  ncol = 4, nrow = 4)
+
+ggsave(broken_stick_plot_merge_theil_sen, path = file.path("Figures"),
+       filename = "broken_stick_plot_merge_theil_sen.jpg", height = 15, width = 19, unit = "in")
