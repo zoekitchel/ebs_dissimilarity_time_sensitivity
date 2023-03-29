@@ -18,6 +18,7 @@ library(sf)
 library(sp)
 library(concaveman)
 library(raster)
+library(ggplot2)
 
 #######################
 ##DATA##
@@ -88,6 +89,37 @@ station_remove <- unique(station_by_year[years_per_station < benchmark_value_yea
 removed_stations <- EBS[station %in% station_remove,.(latitude, longitude, year, station)]
 plot(EBS.latlon$longitude, EBS.latlon$latitude, pch = ".")
 points(removed_stations$longitude, removed_stations$latitude, col = "pink")
+
+#make map of Alaska plus stations, highlighting excluded stations
+
+#create simple feature all stations
+EBS.latlon.sf <- st_as_sf(EBS.latlon, coords=c("longitude","latitude"), crs = 4326)
+
+#create simple feature excluded stations
+removed_stations.sf <- st_as_sf(removed_stations, coords=c("longitude","latitude"), crs = 4326)
+
+#create data frame of east coast CA and USA from rnaturalearth
+state_prov <- rnaturalearth::ne_states(c("united states of america", "canada"), returnclass = "sf")
+
+alaska <- st_crop(state_prov, xmin = -185, ymin = 50, xmax = -140, ymax = 70)
+
+#change projections
+alaska.t <- st_transform(alaska,
+                         crs=4326)
+
+#basemap
+EBS_stations <- ggplot() + 
+  geom_sf(data = alaska.t, color="white", fill="gainsboro", linewidth = 0.1) + 
+  geom_sf(data = removed_stations.sf, color = "pink", size = 1) +
+  geom_sf(data = EBS.latlon.sf, size = 0.01) +
+   coord_sf(expand = T, xlim = c(-180,-140), datum = sf::st_crs(4326)) +
+   theme_classic()
+
+EBS_stations
+
+#save map
+ggsave(EBS_stations, path = file.path("Figures", "Supplement"),
+       filename = "EBS_stations.jpg", height = 4, width = 4, units = "in")
 
 #what percent stations deleted
 
