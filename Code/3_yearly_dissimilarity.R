@@ -327,7 +327,7 @@ EBS.distances_dissimilarities_allyears_by_domain.r <- unique(distances_dissimila
 
 EBS.distances_dissimilarities_allyears <- rbind(EBS.distances_dissimilarities_allyears_fullEBS.r, EBS.distances_dissimilarities_allyears_by_domain.r)
 
-###Visualize change over time
+###Visualize change over time (Bray Curtis Balanced)
 ggplot(EBS.distances_dissimilarities_allyears) +
   geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
@@ -344,6 +344,8 @@ year_beta_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
   theme(legend.position = "null")
 
 saveRDS(year_beta_bydomain, file.path("Figures","year_beta_bydomain.Rds"))
+
+
 
 #slopes
 slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
@@ -388,6 +390,70 @@ year_beta_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
   geom_text(aes(x = 6.5, y = 7.4, label = paste0("Slope = ",slope_inner, "  R^2 = ",R2_inner, "  p = ",p_value_inner)))
 
 ggsave(year_beta_bydomain_annotate, path = file.path("Figures"), filename = "year_beta_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
+
+
+###Visualize change over time (Jaccard)
+ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  theme_classic()
+
+year_beta_jaccard_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity (Jaccard)") +
+  geom_smooth(aes(x = year, y = jaccard_dissimilarity_turnover_mean), method = "lm", se = F, color = "red") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  facet_wrap(~domain) +
+  theme_classic() +
+  theme(legend.position = "null")
+
+saveRDS(year_beta_jaccard_bydomain, file.path("Figures","Supplement","Jaccard","year_beta_jaccard_bydomain.Rds"))
+
+#slopes
+slope_jaccard_full <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_jaccard_inner <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_jaccard_middle <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_jaccard_outer <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+
+slope_jaccard_full
+slope_jaccard_inner
+slope_jaccard_middle
+slope_jaccard_outer
+
+#R^2 values summary(model)
+R2_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+
+R2_jaccard_full
+R2_jaccard_inner
+R2_jaccard_middle
+R2_jaccard_outer
+
+#p_values summary(model)
+p_value_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+
+p_value_jaccard_full
+p_value_jaccard_inner
+p_value_jaccard_middle
+p_value_jaccard_outer
+
+
+#place model values on plot
+year_beta_jaccard_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
+  draw_plot(year_beta_jaccard_bydomain, x = 0, y = 0, width = 10, height = 8) +
+  geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_jaccard_middle, "  R^2 = ",R2_jaccard_middle, "  p = ",p_value_jaccard_middle))) +
+  geom_text(aes(x = 6.8, y = 0.8, label = paste0("Slope = ",slope_jaccard_outer, "  R^2 = ",R2_jaccard_outer, "  p = ",p_value_jaccard_outer))) +
+  geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_jaccard_full, "  R^2 = ",R2_jaccard_full, "  p = ",p_value_jaccard_full))) +
+  geom_text(aes(x = 6.5, y = 7.4, label = paste0("Slope = ",slope_jaccard_inner, "  R^2 = ",R2_jaccard_inner, "  p = ",p_value_jaccard_inner)))
+
+ggsave(year_beta_jaccard_bydomain_annotate, path = file.path("Figures","Supplement","Jaccard"), filename = "year_beta_jaccard_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
+
 
 #####################
 ##Save

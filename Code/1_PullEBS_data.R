@@ -52,6 +52,9 @@ EBS <-  EBS[year>=1984,]
 
 EBS <-  EBS[month %in% c(6,7,8),]
 
+#only observations to species
+EBS <-  EBS[rank == "Species",]
+
 #unique lat lon combos
 EBS.latlon <- unique(EBS[,.(longitude,latitude,haul_id,year)])
 
@@ -137,7 +140,7 @@ hauls_removed_yearstation <- round((length(unique(EBS[,haul_id]))-length(unique(
 #What percent of observations does this remove?
 obs_removed_yearstation <- round((nrow(EBS)-nrow(EBS.r))/nrow(EBS)*100,1)
 
-#removes 4.1% of observations
+#removes 4.3% of observations
 
 #######################
 ##Save finalized dataset

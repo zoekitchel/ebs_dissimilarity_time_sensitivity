@@ -93,7 +93,7 @@ alaska.t <- st_transform(alaska,
 #basemap
 Alaska_domains <- ggplot() + 
   geom_sf(data = alaska.t, color="white", fill="gainsboro", linewidth = 0.1) + 
-  geom_sf(data = EBS.domains.sf, aes(color = domain), alpha = 0.5, size = 0.1) +
+  geom_sf(data = EBS.domains.sf, aes(color = domain), alpha = 0.2, size = 0.01) +
   labs(color = "Domain") +
   scale_x_continuous(breaks=seq(-180,-150, 10), labels = c("180˚W","170˚W","160˚W","150˚W")) +
   scale_y_continuous(breaks=seq(52,65,5)) +
@@ -101,7 +101,8 @@ Alaska_domains <- ggplot() +
   scale_color_manual(values = c("#AA4499","#44AA99","#999933"), labels = c("Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   theme_classic() +
   #make legend visible
-  guides(color = guide_legend(override.aes = list(size=4, alpha = 0.8)))
+  guides(color = guide_legend(override.aes = list(size=4, alpha = 0.8))) +
+  theme(legend.position = c(0.2,0.8))
 
 Alaska_domains
 
@@ -117,5 +118,7 @@ saveRDS(Alaska_domains, file.path("Figures","Alaska_domains.Rds"))
 ##Save Data##
 #######################
 fwrite(EBS.domains.r.full, file.path("Data","EBS.domains.r.full.csv"))
+
+EBS.domains.r.full <- fread(file.path("Data","EBS.domains.r.full.csv"))
 
        

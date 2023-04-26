@@ -3,7 +3,7 @@
 
 # How does when you look, and how long, affect the conclusions you reach about your data?
 # Are short term studies more likely to yield significant results?
-# Are short term studies more likely to find *erroneous* significant trends?
+# Are short term studies more likely to find spurious significant trends?
 # This script will perform a simple moving window analysis to answer these questions
 # for long term data across a variety of domains- essentially, data gets subsetted, 
 # we run a simple linear regression on each subset and record summary stats, trends
@@ -92,7 +92,6 @@ breakup<-function(data, window, linear_model = "lm"){ #window is the size of the
                      years=integer(0),
                      slope=numeric(0), 
                      slope_se=numeric(0), 
-                     p_value=numeric(0),
                      intercept=numeric(0), 
                      intercept_se=numeric(0), 
                      intercept_p_value=numeric(0),
@@ -204,12 +203,16 @@ pyramid_plot<- function(data, title="", significance=0.05, plot_insig=TRUE, rsq_
     geom_vline(xintercept = 20, linetype = "dashed", color = "grey") +
     geom_vline(xintercept = 30, linetype = "dashed", color = "grey") +
     aes(y = slope, x = N_years,  ymin = (slope-slope_se), 
-        ymax = (slope+slope_se), shape=significance, color=significance) +
+        ymax = (slope+slope_se),
+        #shape=significance, 
+        color=significance) +
     geom_linerange(show.legend = F)+ 
-    geom_point(size=point_scale)+ ggtitle(title)+
-    scale_shape_manual(values=c("No"=4,"Yes"=yespt))+
+    geom_point(size=point_scale*0.5, alpha = 0.5)+ ggtitle(title)+
+  #  scale_shape_manual(values=c("No"=4,"Yes"=yespt))+
     scale_color_manual(values=c("No"="red","Yes"="black"))+
-    labs(x = "Number of years in window", y = "Slope", shape = "p-value < 0.05", color = "p-value < 0.05")+
+    labs(x = "Number of years in window", y = "Slope",
+         #shape = "p-value < 0.05",
+         color = "p-value < 0.05")+
     scale_x_continuous(lim=c(3, maxyears))+
     coord_flip()
   return(plot)
@@ -296,6 +299,8 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #to reach 'stability'-so let's define stability as >(some percentage of slopes) occuring within 
 #the standard deviation of the slope of the longest series, for a given window length, allow user to change # of SEs
 
+#For INSIGNIFICANT, we are just interested in time it takes for an insignificant yet negative slope to be most likely
+
 stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm"){#returns a number 
   test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
@@ -322,8 +327,6 @@ stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model
   return(stability)
 }
 
-#and a test
-stability_time(EBS.dissim.simp, error_multiplyer = 1)
 
 #linear model
 stability_time(EBS.dissim.simp[domain == "Full"], error_multiplyer = 1) #21
@@ -737,13 +740,83 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, 
     xlab("Year")+ylab("β diversity")
   return(plot)
 }
-#test it
-broken_stick_plot(EBS.dissim.simp, window_length = 32, significance = 0.5)
 
 
+#SPECIFICALLY FOR FIGURE 1
+broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_length=3, linear_model = "lm"){
+  out<-multiple_breakups(data, linear_model = linear_model)
+  years<-length(unique(out$start_year))
+  maxyears<-max(out$N_years)
+  count<-nrow(out) # of total models
+  out<-out[which(out$N_years==window_length),] #only work with one window length per plot
+  #create a separate frame for significant and not results
+  out_sig<-out[which(out$p_value<significance),]
+  countsig<-nrow(out_sig)#count the number of rows in the set we want to plot
+  out_not<-out[which(out$p_value>significance),]
+  countnot<-nrow(out_not)#count the number of rows in the set we want to plot
+  P_correct <- signif(countnot/nrow(out),2)
+  mean_slope <- signif(mean(out$slope),2)
+  plot<- ggplot(data, aes(x=year, y=bray_curtis_dissimilarity_balanced_mean)) +
+    theme_classic()
+  if(countnot>0){ # # not significant
+    for(i in 1:countnot){ #plot not significant windows
+      slopei<-out_not$slope[i] #slope
+      intercepti<-out_not$intercept[i] #intercept
+      xstarti <- out_not$start_year[i]
+      xendi <- out_not$start_year[i]+out_not$N_years[i]-1
+      ystarti <- intercepti + xstarti*slopei
+      yendi <- intercepti + xendi*slopei
+      plot<-plot+geom_segment(x = xstarti, xend= xendi, y = ystarti, yend = yendi, colour="grey12",
+                             alpha = 0.2, linewidth = 0.4)
+    }
+  }
+  if(countsig>0){ # # significant
+    for(i in 1:countsig){ #plot significant windows
+      slopei<-out_sig$slope[i] #slope
+      intercepti<-out_sig$intercept[i] #intercept
+      xstarti <- out_sig$start_year[i]
+      xendi <- out_sig$start_year[i]+out_not$N_years[i]-1
+      ystarti <- intercepti + xstarti*slopei
+      yendi <- intercepti + xendi*slopei
+      plot<-plot+geom_segment(x = xstarti, xend= xendi, y = ystarti, yend = yendi, colour="indianred3",
+                              linewidth = 0.6)
+    }
+  }
+  
+  
+  plot<-plot+ 
+    ggtitle(paste0(title, "   mean slope =", mean_slope, "      P(correct) = ",P_correct))+
+    geom_point(size=0.7, fill="grey22", alpha = 0.5)+
+    xlab("Year")+ylab("β diversity")
+  return(plot)
+}
 
+#for figure
+#full EBS,  3 year window
+broken_stick_plot_w3_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], window_length = 3, title="3-year", significance=0.05)
+ggsave(broken_stick_plot_w3_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w3_full_lm_fig1.jpg")
+#and grob too
+saveRDS(broken_stick_plot_w3_full_lm_fig1, file.path("Figures","broken_stick_plot_w3_full_lm_fig1.Rds"))
 
+#full EBS,  10 year window
+broken_stick_plot_w10_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], window_length = 10, title="10-year", significance=0.05)
+ggsave(broken_stick_plot_w10_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w10_full_lm_fig1.jpg")
+#and grob too
+saveRDS(broken_stick_plot_w10_full_lm_fig1, file.path("Figures","broken_stick_plot_w10_full_lm_fig1.Rds"))
 
+#full EBS,  20 year window
+broken_stick_plot_w20_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], window_length = 20, title="20-year", significance=0.05)
+ggsave(broken_stick_plot_w20_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w20_full_lm_fig1.jpg")
+#and grob too
+saveRDS(broken_stick_plot_w20_full_lm_fig1, file.path("Figures","broken_stick_plot_w20_full_lm_fig1.Rds"))
+
+#full EBS,  35 year window
+broken_stick_plot_w35_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], window_length = 35, title="35-year", significance=0.05)
+ggsave(broken_stick_plot_w35_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w35_full_lm_fig1.jpg")
+#and grob too
+saveRDS(broken_stick_plot_w35_full_lm_fig1,file.path("Figures","broken_stick_plot_w35_full_lm_fig1.Rds"))
+
+#all plots, directly from Bahlai code, probably won't use
 
 #linear model
   #window length 3
