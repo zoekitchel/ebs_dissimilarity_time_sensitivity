@@ -299,7 +299,7 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #to reach 'stability'-so let's define stability as >(some percentage of slopes) occuring within 
 #the standard deviation of the slope of the longest series, for a given window length, allow user to change # of SEs
 
-#For INSIGNIFICANT, we are just interested in time it takes for an insignificant yet negative slope to be most likely
+#For INSIGNIFICANT, we are just interested in time it takes for an insignificant slope to be most likely
 
 stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm"){#returns a number 
   test<-multiple_breakups(data, linear_model = linear_model)
@@ -521,6 +521,7 @@ proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm")
   windows<-unique(test$N_years)#get a list of unique window lengths
   prop.vec<-c()#create a blank vector to store proportions in
   r.vec<-c()#create vector for storing average rsquare values in
+  slope.vec<-c()#create vector for storing average slope values in
   for(i in 1:length(windows)){#for each window length, compute proportion 'wrong'
     window_length<-windows[i]
     test_subset<-test[which(test$N_years==window_length),]
@@ -539,19 +540,21 @@ proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm")
     proportion<-count_wrong/number_of_windows
     prop.vec<-c(prop.vec, proportion)
     avg.confidence<-mean(test_subset$r_square)
+    avg.slope <- mean(test_subset$slope)
     r.vec<-c(r.vec, avg.confidence)
+    slope.vec <-c(slope.vec, avg.slope)
   }
   
+  w_name <-"avg_slope"
   x_name <- "window_length"
   y_name <- "proportion_wrong"
   z_name <- "avg_r_square"
   
-  dt <- data.table(windows, prop.vec, r.vec)
-  names(dt) <- c(x_name, y_name, z_name)
+  dt <- data.table(windows, prop.vec, r.vec, slope.vec)
+  names(dt) <- c(x_name, y_name, z_name, w_name)
   return(dt)
   
 }
-
 
 #test it
 
@@ -660,6 +663,41 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
   return(plot)
 }
 
+#simplify for figure 2
+wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm", point_color = "black"){
+  threshold<-stability_time(data, min_percent, error_multiplyer, linear_model = linear_model)#find stability threshold
+  wrongness<-proportion_wrong_series(data, significance)
+  maxyears<-max(wrongness$window_length)
+  plot<- ggplot(wrongness) +
+    theme_classic() +
+    geom_vline(xintercept = (threshold-0.1), linetype = 3, color="grey38") +
+    geom_point(aes(y = 1-proportion_wrong, x = window_length), size=3, color = point_color)+
+    ggtitle(title)+
+    xlab("Number of years in window")+
+    ylab("P(correct)")+
+    ylim(0,1)
+  return(plot)
+}
+
+#reorder factors
+proportion_wrong_series_all[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+
+
+#FOR FIGURE 2
+  #linear model
+  #full EBS
+  wrongness_plot_full_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05)
+  ggsave(wrongness_plot_full_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_full_lm_fig2.jpg")
+  
+  wrongness_plot_inner_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05, point_color = "#AA4499")
+  ggsave(wrongness_plot_inner_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_inner_lm_fig2.jpg")
+  
+  wrongness_plot_middle_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05, point_color = "#44AA99")
+  ggsave(wrongness_plot_middle_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_middle_lm_fig2.jpg")
+  
+  wrongness_plot_outer_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05, point_color = "#999933")
+  ggsave(wrongness_plot_outer_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_outer_lm_fig2.jpg")
+
 
 #plot
 #linear model
@@ -696,6 +734,68 @@ wrongness_plot_merge <- plot_grid(
 
 ggsave(wrongness_plot_merge, path = file.path("Figures"),
        filename = "wrongness_plot_merge.jpg", height = 8, width = 15, unit = "in")
+
+
+
+#ALTENRATIVELY, FOR FIGURE 2,  USE FACET
+  #reorder factors
+  proportion_wrong_series_all[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+  
+  #add stability point
+  proportion_wrong_series_all[,long_term_stable := ifelse(Domain == "Full",stability_time(EBS.dissim.simp[domain == "Full"]),
+                                                          ifelse(Domain == "Inner", stability_time(EBS.dissim.simp[domain == "Inner"]),
+                                                                 ifelse(Domain == "Middle", stability_time(EBS.dissim.simp[domain == "Middle"]),
+                                                                        stability_time(EBS.dissim.simp[domain == "Outer"])
+  )))]
+  
+  #long term slopes
+  #slopes
+  slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  
+  #add long term slope
+  proportion_wrong_series_all[,long_term_slope := ifelse(Domain == "Full",slope_full,ifelse(Domain == "Inner", slope_inner, ifelse(
+    Domain == "Middle", slope_middle, slope_outer
+  )))]
+  
+  
+  #plot wrongness without function, but faceted
+  Fig2_stability_bydomain <- ggplot(proportion_wrong_series_all[linear_model == "lm",]) +
+    theme_classic() +
+    geom_vline(aes(xintercept = long_term_stable), linetype = 3, color="grey38") +
+    geom_point(aes(y = 1-proportion_wrong, x = window_length, color = Domain))+
+    scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+    facet_wrap(~Domain, nrow = 1) +
+    xlab("Number of years in window")+
+    ylab("P(correct)\n")+
+    ylim(0,1)+
+    theme(legend.position = "null")
+  
+Fig2_slope_bydomain <- ggplot(proportion_wrong_series_all[linear_model == "lm",]) +
+    theme_classic() +
+    geom_hline(aes(yintercept = long_term_slope), color = "red", linetype = "dashed") +
+    geom_point(aes(y = avg_slope, x = window_length, color = Domain))+
+    scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+    facet_wrap(~Domain, nrow = 1) +
+    xlab("Number of years in window")+
+    ylab("Average slope")+
+    theme(legend.position = "null")
+
+#merge stability plot and slope plot
+
+p_correct_slope_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
+  #add map
+  draw_plot(Fig2_stability_bydomain + theme(axis.title.x = element_blank()),
+            x = 0, y = 2, width = 8, height =2) +
+  draw_plot(Fig2_slope_bydomain + theme(strip.text.x = element_blank()),
+            x = 0, y = 0, width = 8, height =2) +
+  geom_text(aes(x = 0.25, y = 3.8, label = "a."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 0.25, y =2, label = "b."), size = 3.5, fontface = "bold")
+
+ggsave(p_correct_slope_merge, path = file.path("Figures"),
+       filename = "p_correct_slope_merge.jpg", height = 4, width = 8, unit = "in")
 
 
 

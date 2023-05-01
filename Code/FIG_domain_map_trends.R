@@ -28,7 +28,7 @@ Alaska_domains <- readRDS(file.path("Figures","Alaska_domains.Rds"))
 broken_stick_plot_w3_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w3_full_lm_fig1.Rds"))
 broken_stick_plot_w10_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w10_full_lm_fig1.Rds"))
 broken_stick_plot_w20_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w20_full_lm_fig1.Rds"))
-broken_stick_plot_w30_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w30_full_lm_fig1.Rds"))
+broken_stick_plot_w35_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w35_full_lm_fig1.Rds"))
 
 #Pull in distances dissimilarities csv to calculate slopes of year~dissimilarity
 EBS.distances_dissimilarities_allyears <-  fread(file.path("Output","EBS.distances_dissimilarities_allyears.csv"))
@@ -131,20 +131,28 @@ BC_dissim_F <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",])
 
 #place model values on plot
 map_year_beta_bydomain_annotate <- ggdraw(xlim = c(0,30), ylim = c(0,20)) +
-  draw_plot(BC_dissim_O_M_I, x = 0, y = 0, width = 10, height = 5.5) +
-  draw_plot(Alaska_domains, x = 0, y = 5, width = 10, height = 15) +
-  draw_plot(BC_dissim_F, x = 10, y = 0, width = 10, height = 20) +
-  geom_text(aes(x = 15, y = 18, label = paste0("Slope = ",slope_full,
-  "\nR^2 = ",R2_full, "\np = ",p_value_full)), size = 3) +
-  draw_plot(broken_stick_plot_w3_full_lm_fig1, x = 20, y = 15,  width = 10,  height = 5) +
-  draw_plot(broken_stick_plot_w10_full_lm_fig1, x = 20, y = 10,  width = 10,  height = 5) +
-  draw_plot(broken_stick_plot_w20_full_lm_fig1, x = 20, y = 5,  width = 10,  height = 5) +
-  draw_plot(broken_stick_plot_w30_full_lm_fig1, x = 20, y = 0,  width = 10,  height = 5)
+  draw_plot(BC_dissim_O_M_I + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 8) +
+  draw_plot(Alaska_domains, x = 0, y =6.5, width = 10, height = 15) +
+  draw_plot(BC_dissim_F + theme(axis.title.x = element_blank()), x = 10, y = 0, width = 13, height = 20) +
+  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_full,"\np = ",p_value_full)), size = 3) +
+  draw_plot(broken_stick_plot_w3_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w10_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w20_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w35_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
+  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 1.3, y = 7.3, label = "b."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 4.3, y =7.3, label = "c."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 7.3, y =7.3, label = "d."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 10.5, y = 19.7, label = "e."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 23, y = 19.7, label = "f."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 23, y = 14.5, label = "g."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 23, y = 9.5, label = "h."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 23, y = 4.5, label = "i."), size = 3.5, fontface = "bold")
   
  
 map_year_beta_bydomain_annotate 
 
-ggsave(map_year_beta_bydomain_annotate, path = file.path("Figures"), filename = "map_year_beta_bydomain_annotate.jpg", height =6, width = 15)
+ggsave(map_year_beta_bydomain_annotate, path = file.path("Figures"), filename = "map_year_beta_bydomain_annotate.jpg", height =5, width = 13.5)
 
 #JACCARD
 #place model values on plot
