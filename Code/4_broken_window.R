@@ -299,9 +299,11 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #to reach 'stability'-so let's define stability as >(some percentage of slopes) occuring within 
 #the standard deviation of the slope of the longest series, for a given window length, allow user to change # of SEs
 
+#because for us, long term slope is insignificant, we will define stability as >(some percentage of slopes) that are insignificant
+
 #For INSIGNIFICANT, we are just interested in time it takes for an insignificant slope to be most likely
 
-stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm"){#returns a number 
+stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm", significance = 0.05){#returns a number 
   test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
@@ -311,37 +313,53 @@ stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model
   min_true<-true_slope-true_error
   windows<-unique(test$N_years)#get a list of unique window lengths
   stability<-max(windows) #start with the assumption that the longest window is the only stable one
-  for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
-    window_length<-windows[i]
-    test_subset<-test[which(test$N_years==window_length),]
-    number_of_windows<-nrow(test_subset)#how many windows
-    correct_subset<-test_subset[which((test_subset$slope<max_true) & (test_subset$slope>min_true)),]
-    number_of_correct<-nrow(correct_subset)#how many windows give the right answer
-    percentage_correct<-100*number_of_correct/number_of_windows
-    if(percentage_correct > min_percent){
-      if(window_length < stability){
-        stability<-window_length
+  if(test[count,6] <= significance){ #is p-value of long term trend significant? yes
+      for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
+        window_length<-windows[i]
+        test_subset<-test[which(test$N_years==window_length),]
+        number_of_windows<-nrow(test_subset)#how many windows
+        correct_subset<-test_subset[which((test_subset$slope<max_true) & (test_subset$slope>min_true)),]
+        number_of_correct<-nrow(correct_subset)#how many windows give the right answer
+        percentage_correct<-100*number_of_correct/number_of_windows
+        if(percentage_correct > min_percent){
+          if(window_length < stability){
+            stability<-window_length
+            }
+          }
+        }
+      }else{ #is p-value of long term trend significant? no
+        for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
+          window_length<-windows[i]
+          test_subset<-test[which(test$N_years==window_length),]
+          number_of_windows<-nrow(test_subset)#how many windows
+          correct_subset<-test_subset[which(test_subset$p_value > significance),]
+          number_of_correct<-nrow(correct_subset)#how many windows give the right answer
+          percentage_correct<-100*number_of_correct/number_of_windows
+          if(percentage_correct > min_percent){
+            if(window_length < stability){
+              stability<-window_length
+            }
+          }
+        }
       }
-    }
-  }
   return(stability)
 }
 
 
 #linear model
-stability_time(EBS.dissim.simp[domain == "Full"], error_multiplyer = 1) #21
-stability_time(EBS.dissim.simp[domain == "Inner"], error_multiplyer = 1) #22
-stability_time(EBS.dissim.simp[domain == "Outer"], error_multiplyer = 1) #26
-stability_time(EBS.dissim.simp[domain == "Middle"], error_multiplyer = 1) #22
+stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 99) #32
+stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 99) #3
+stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 99) #4
+stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 99) #23
 
 #theil
-stability_time(EBS.dissim.simp[domain == "Full"], error_multiplyer = 1, linear_model = "theil_sen_regression") #21
-stability_time(EBS.dissim.simp[domain == "Inner"], error_multiplyer = 1, linear_model = "theil_sen_regression") #21
-stability_time(EBS.dissim.simp[domain == "Outer"], error_multiplyer = 1, linear_model = "theil_sen_regression") #26
-stability_time(EBS.dissim.simp[domain == "Middle"], error_multiplyer = 1, linear_model = "theil_sen_regression") #22
+stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 99, linear_model = "theil_sen_regression") #32
+stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 99, linear_model = "theil_sen_regression") #3
+stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 99, linear_model = "theil_sen_regression") #3
+stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 99, linear_model = "theil_sen_regression") #22
 
 
-#21-26 years of observation in EBS to get reliable dissimilarity trend
+#3-32 years of observation in EBS to get reliable dissimilarity trend
 
 #now a function that finds the absolute range of findings, and the absolute 
 #range of significant findings
@@ -686,16 +704,16 @@ proportion_wrong_series_all[,Domain := factor(domain, levels = c("Full","Outer",
 #FOR FIGURE 2
   #linear model
   #full EBS
-  wrongness_plot_full_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05)
+  wrongness_plot_full_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05, min_percent = 99)
   ggsave(wrongness_plot_full_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_full_lm_fig2.jpg")
   
-  wrongness_plot_inner_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05, point_color = "#AA4499")
+  wrongness_plot_inner_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05, point_color = "#AA4499", min_percent = 99)
   ggsave(wrongness_plot_inner_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_inner_lm_fig2.jpg")
   
-  wrongness_plot_middle_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05, point_color = "#44AA99")
+  wrongness_plot_middle_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05, point_color = "#44AA99", min_percent = 99)
   ggsave(wrongness_plot_middle_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_middle_lm_fig2.jpg")
   
-  wrongness_plot_outer_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05, point_color = "#999933")
+  wrongness_plot_outer_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05, point_color = "#999933", min_percent = 99)
   ggsave(wrongness_plot_outer_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_outer_lm_fig2.jpg")
 
 
