@@ -36,15 +36,17 @@ EBS.dissim.simp <- EBS.distances_dissimilarities_allyears[,.(year, bray_curtis_d
 
 # next we need a function that runs a simple linear model of x=year, y=response variable
 
-linefit<-function (data, linear_model = "lm"){
+linefit<-function (data, linear_model = "lm", level = 0.95){
   #fit the model
   model<-eval(call(linear_model, bray_curtis_dissimilarity_balanced_mean~year, data=data))
   #create a vector of relevant outputs. We want slope, error, P value
   output<-c(min(data$year), #year the analysis started on
-            nrow(data), #number of data points the analysis includes
-            length(unique(data$year)), #number of years the analysis includes
+            length(unique(data$year)), #number of unique years the analysis includes
+            max(data$year)-min(data$year)+1, #total study duration (add one for final years)
             summary(model)$coefficients[2,1], # slope
             summary(model)$coefficients[2,2], # se for slope
+            confint(model, level = level)[2,1], #lower bound of CI for parameter
+            confint(model, level = level)[2,2], #upper bound of CI for parameter
             summary(model)$coefficients[2,4], #p value slope
             summary(model)$coefficients[1,1], # intercept
             summary(model)$coefficients[1,2], # se for intercept
@@ -54,6 +56,7 @@ linefit<-function (data, linear_model = "lm"){
             ifelse(linear_model == "lm",0,1)) 
   return(output)
 }
+
 
 #and try this on test data
 #linear model
@@ -85,7 +88,7 @@ linefit(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression
 #then we want to discard the first row of the data set, and repeat until fewer than
 #the number of rows specified remains
 
-breakup<-function(data, window, linear_model = "lm"){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
+breakup<-function(data, window, linear_model = "lm",level = 0.95){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
   remaining<-data #create dummy data set to operate on
   output<-data.frame(year=integer(0), #create empty data frame to put our output variables in
                      length=integer(0), 
@@ -102,7 +105,7 @@ breakup<-function(data, window, linear_model = "lm"){ #window is the size of the
   while (numyears>(window-1)){ #while there's still more years of data than in the window
     chunk<-subset(remaining, year<(min(year)+window)) #pull out a chunk as big as the window from the top of the data
     
-    out <- eval(call("linefit",chunk, linear_model = linear_model)) #fit a linear model (either lm or theil) and get relevant statistics on chunk
+    out <- eval(call("linefit",chunk, linear_model = linear_model, level = 0.95)) #fit a linear model (either lm or theil) and get relevant statistics on chunk
     #add a conditional so that if there's missing data, it's not included in output
     if (window==length(unique(chunk$year))){
       output<-rbind(output, out) #append the stats to the output data frame
@@ -113,7 +116,7 @@ breakup<-function(data, window, linear_model = "lm"){ #window is the size of the
     remaining<-subset(remaining, year>min(year)) #cut out the first year of the remaining data + repeat
     numyears<-length(unique(remaining$year))
   }
-  names(output)<-c("start_year", "N_data", "N_years", "slope", "slope_se", "p_value",
+  names(output)<-c("start_year", "N_data", "N_years", "slope", "slope_se","lower_CI","upper_CI" ,"p_value",
                    "intercept", "intercept_se", "intercept_p_value","r_square", "adj_r_square", "linear_model")
   return(output)#output the data frame
 }
@@ -133,13 +136,15 @@ breakup(EBS.dissim.simp[domain == "Middle"], 3, linear_model = "theil_sen_regres
 
 # now time to write the function that will iterate through our targetted windows
 
-multiple_breakups<-function(data, linear_model = "lm"){
+multiple_breakups<-function(data, linear_model = "lm", level = 0.95){
   count<-length(data$year)
   output<-data.frame(year=integer(0), #create empty data frame to put our output variables in
                      length=integer(0), 
                      years=integer(0),
                      slope=numeric(0), 
                      slope_se=numeric(0), 
+                     lower_CI=numeric(0),
+                     upper_CI=numeric(0),
                      p_value=numeric(0),
                      intercept=numeric(0), 
                      intercept_se=numeric(0), 
@@ -148,7 +153,7 @@ multiple_breakups<-function(data, linear_model = "lm"){
                      adj_r_square=numeric(0),
                      linear_model=character(0))
   for(i in 3:(count)){
-    outeach<-breakup(data, i, linear_model = linear_model) #fit at each window length
+    outeach<-breakup(data, i, linear_model = linear_model, level = 0.95) #fit at each window length
     output<-rbind(output, outeach)#bind it to the frame
   }
   out<-output
@@ -173,16 +178,14 @@ multiple_breakups(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen
 #let's create a plotting function
 
 pyramid_plot<- function(data, title="", significance=0.05, plot_insig=TRUE, rsq_points=FALSE, linear_model = "lm"){
-  out<-multiple_breakups(data, linear_model = linear_model)
+  out<-multiple_breakups(data, linear_model = linear_model, level = 0.95)
   years<-length(unique(out$start_year))
   maxyears<-max(out$N_years)
   count<-nrow(out)
   #compute mean and sd of longest series for vertical lines
   true_slope<-out[count,4] #find the slope of the longest series
-  #remember to convert standard error to standard deviation
-  true_error<-(out[count,5])*(sqrt(out[count, 2]))#find the error of the longest series
-  max_true<-true_slope+true_error #compute max and min values for slopes we are calling true
-  min_true<-true_slope-true_error
+  min_true<-out[count,6] #compute max and min values for slopes we are calling true
+  max_true<-out[count,7]
   out$significance<-ifelse(out$p_value<significance, "Yes", "No")
   if(rsq_points==TRUE){
     point_scale<-10*out$r_square
@@ -296,24 +299,22 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 
 #now that we have visualization, we need a way to pull relevant metrics out of the computation
 #so let's say our longest series is our 'truth', and we want to know how many years it takes 
-#to reach 'stability'-so let's define stability as >(some percentage of slopes) occuring within 
-#the standard deviation of the slope of the longest series, for a given window length, allow user to change # of SEs
+#to reach 'stability'-so let's define stability as >(some percentage of model slopes) occuring within 
+#the 95%. CI of the slope of the longest series, for a given window length, allow user to change level of significance
 
-#because for us, long term slope is insignificant, we will define stability as >(some percentage of slopes) that are insignificant
 
-#For INSIGNIFICANT, we are just interested in time it takes for an insignificant slope to be most likely
-
-stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model = "lm", significance = 0.05){#returns a number 
-  test<-multiple_breakups(data, linear_model = linear_model)
+stability_time <-function(data, min_percent=95, linear_model = "lm", significance = 0.05, level = 0.95){#returns a number 
+  test<-multiple_breakups(data, linear_model = linear_model, level = 0.95)
   count<-nrow(test)
+  #compute mean and sd of longest series for vertical lines
   true_slope<-test[count,4] #find the slope of the longest series
-  #remember to convert standard error to standard deviation
-  true_error<-(test[count,5])*(sqrt(test[count, 2]))*error_multiplyer #find the error of the longest series
-  max_true<-true_slope+true_error #compute max and min values for slopes we are calling true
-  min_true<-true_slope-true_error
+  min_true<-test[count,6] #compute max and min values for slopes we are calling true
+  max_true<-test[count,7]
   windows<-unique(test$N_years)#get a list of unique window lengths
   stability<-max(windows) #start with the assumption that the longest window is the only stable one
-  if(test[count,6] <= significance){ #is p-value of long term trend significant? yes
+  
+ # if(test[count,8] <= significance){ #is p-value of long term trend significant? yes (not using this currently)
+  
       for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
         window_length<-windows[i]
         test_subset<-test[which(test$N_years==window_length),]
@@ -326,40 +327,43 @@ stability_time <-function(data, min_percent=95, error_multiplyer=1, linear_model
             stability<-window_length
             }
           }
-        }
-      }else{ #is p-value of long term trend significant? no
-        for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
-          window_length<-windows[i]
-          test_subset<-test[which(test$N_years==window_length),]
-          number_of_windows<-nrow(test_subset)#how many windows
-          correct_subset<-test_subset[which(test_subset$p_value > significance),]
-          number_of_correct<-nrow(correct_subset)#how many windows give the right answer
-          percentage_correct<-100*number_of_correct/number_of_windows
-          if(percentage_correct > min_percent){
-            if(window_length < stability){
-              stability<-window_length
-            }
-          }
-        }
       }
+  #this ifelse statement allows us to define stability differently for insignificant long term trends, but for now,
+  #we will define the same no matter the long term trend
+  
+    #  }else{ #is p-value of long term trend significant? no
+    #    for(i in 1:length(windows)){#for each window length, compute proportion 'correct'
+    #      window_length<-windows[i]
+    #      test_subset<-test[which(test$N_years==window_length),]
+    #      number_of_windows<-nrow(test_subset)#how many windows
+    #      correct_subset<-test_subset[which(test_subset$p_value > significance),]
+    #      number_of_correct<-nrow(correct_subset)#how many windows give the right answer
+    #      percentage_correct<-100*number_of_correct/number_of_windows
+    #      if(percentage_correct > min_percent){
+    #        if(window_length < stability){
+    #          stability<-window_length
+    #        }
+     #     }
+    #    }
+    #  }
   return(stability)
 }
 
 
 #linear model
-stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 99) #32
-stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 99) #3
-stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 99) #4
-stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 99) #23
+stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 95) #32
+stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 95) #29
+stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 95) #32
+stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 95) #32
 
 #theil
-stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 99, linear_model = "theil_sen_regression") #32
-stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 99, linear_model = "theil_sen_regression") #3
-stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 99, linear_model = "theil_sen_regression") #3
-stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 99, linear_model = "theil_sen_regression") #22
+stability_time(EBS.dissim.simp[domain == "Full"], min_percent = 95, linear_model = "theil_sen_regression") #33
+stability_time(EBS.dissim.simp[domain == "Inner"], min_percent = 95, linear_model = "theil_sen_regression") #1
+stability_time(EBS.dissim.simp[domain == "Outer"], min_percent = 95, linear_model = "theil_sen_regression") #32
+stability_time(EBS.dissim.simp[domain == "Middle"], min_percent = 95, linear_model = "theil_sen_regression") #33
 
 
-#3-32 years of observation in EBS to get reliable dissimilarity trend
+#29-32 years of observation in EBS to get reliable dissimilarity trend
 
 #now a function that finds the absolute range of findings, and the absolute 
 #range of significant findings
@@ -495,7 +499,7 @@ proportion_wrong <- function(data, significance=0.05, linear_model = "lm"){#retu
   test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
-  true_p<-test[count,6]
+  true_p<-test[count,8]
   #case 1: true slope is not significant
   if (true_p>significance){
     wrong_windows<-test[which(test$p_value<significance),]
@@ -525,51 +529,55 @@ proportion_wrong(EBS.dissim.simp[domain == "Outer"], significance = 0.05, linear
 proportion_wrong(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
 
 
-#14% - 38% of the time, the slope is "significant" but is not the same as the "true" slope for 36 years
+#17% - 38% of the time, the slope is "significant" but is not the same as the "true" slope for 36 years
 
 #proportion wrong by series length- basically the same thing as proportion wrong but looped 
 #over all the unique window lengths. Will output a data frame with a window length and proportion
-#of outputs are significantly misleading, plus average r square for that window length
+#of outputs with slope that is not within 95% confidence level, plus average r square for that window length
 
 proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm"){#returns a single value between 0 and 1
   test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
-  true_p<-test[count,6]
+  true_p<-test[count,8] #p of longest series
+  min_true<-test[count,6] #compute max and min values for slopes we are calling true
+  max_true<-test[count,7]
   windows<-unique(test$N_years)#get a list of unique window lengths
   prop.vec<-c()#create a blank vector to store proportions in
   r.vec<-c()#create vector for storing average rsquare values in
   slope.vec<-c()#create vector for storing average slope values in
+  slope.SD.vec <-c()#create vector for storing slope SD values in
   for(i in 1:length(windows)){#for each window length, compute proportion 'wrong'
     window_length<-windows[i]
     test_subset<-test[which(test$N_years==window_length),]
     number_of_windows<-nrow(test_subset)#how many windows
-    #case 1: true slope is not significant
-    if (true_p>significance){
-      wrong_windows<-test_subset[which(test_subset$p_value<significance),]
-    }else{ #true slope is significant
-      if(true_slope>0){#true slope is positive
-        wrong_windows<-test_subset[which(test_subset$slope<0|test_subset$p_value>significance),]#wrong means the slope is the wrong sign or 0
-      }else{#true slope is negative
-        wrong_windows<-test_subset[which(test_subset$slope>0|test_subset$p_value>significance),]#wrong means the slope is the wrong sign or 0
-      }
-    }
-    count_wrong<-nrow(wrong_windows)
+  #  #case 1: true slope is not significant (ignore for now)
+  #  if (true_p>significance){
+   #   wrong_windows<-test_subset[which(test_subset$p_value<significance),]
+   # }else{ #true slope is significant
+    
+    #wrong means the slope is NOT within 95% confidence
+        right_windows<-test_subset[which(test_subset$slope > min_true & test_subset$slope < max_true),]
+    #}
+    count_wrong<-number_of_windows-nrow(right_windows)
     proportion<-count_wrong/number_of_windows
     prop.vec<-c(prop.vec, proportion)
     avg.confidence<-mean(test_subset$r_square)
     avg.slope <- mean(test_subset$slope)
     r.vec<-c(r.vec, avg.confidence)
     slope.vec <-c(slope.vec, avg.slope)
+    slope_STDV <- sd(test_subset$slope)
+    slope.SD.vec <-c(slope.SD.vec, slope_STDV)
   }
   
-  w_name <-"avg_slope"
   x_name <- "window_length"
   y_name <- "proportion_wrong"
   z_name <- "avg_r_square"
+  v_name <- "slope_SD"
+  w_name <-"avg_slope"
   
-  dt <- data.table(windows, prop.vec, r.vec, slope.vec)
-  names(dt) <- c(x_name, y_name, z_name, w_name)
+  dt <- data.table(windows, prop.vec, r.vec, slope.vec,slope.SD.vec)
+  names(dt) <- c(x_name, y_name, z_name, w_name,v_name)
   return(dt)
   
 }
@@ -597,8 +605,7 @@ proportion_wrong_series_outer_theil_sen <- proportion_wrong_series(EBS.dissim.si
 proportion_wrong_series_outer_theil_sen[,domain := "Outer"][,linear_model := "theil_sen"]
 proportion_wrong_series_middle_theil_sen <- proportion_wrong_series(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linear_model = "theil_sen_regression")
 proportion_wrong_series_middle_theil_sen[,domain := "Middle"][,linear_model := "theil_sen"]
-#proportion significantly wrong under stability time- we're going to define this as 'directionally wrong'
-#where there is a significant relationship that does not match the direction of the true slope
+
 
 proportion_wrong_series_all<-rbind(proportion_wrong_series_full_lm,
   proportion_wrong_series_full_theil_sen, proportion_wrong_series_inner_lm,
@@ -606,7 +613,7 @@ proportion_wrong_series_all<-rbind(proportion_wrong_series_full_lm,
   proportion_wrong_series_middle_theil_sen, proportion_wrong_series_outer_lm,
   proportion_wrong_series_outer_theil_sen)
 
-#proportion wrong before stability
+#proportion wrong before stability (must edit)
 proportion_wrong_before_stability<- function(data, significance=0.05,
                                              min_percent=95, error_multiplyer=1,
                                              linear_model = "lm"){#returns a single value between 0 and 1
@@ -614,7 +621,7 @@ proportion_wrong_before_stability<- function(data, significance=0.05,
   test<-multiple_breakups(data, linear_model = linear_model)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
-  true_p<-test[count,6]
+  true_p<-test[count,8]
   
   #cut out data below threshold
   threshold<-stability_time(data, min_percent, error_multiplyer)#find stability threshold
@@ -692,7 +699,7 @@ wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_mul
     geom_point(aes(y = 1-proportion_wrong, x = window_length), size=3, color = point_color)+
     ggtitle(title)+
     xlab("Number of years in window")+
-    ylab("P(correct)")+
+    ylab("P(match)")+
     ylim(0,1)
   return(plot)
 }
@@ -787,7 +794,7 @@ ggsave(wrongness_plot_merge, path = file.path("Figures"),
     scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
     facet_wrap(~Domain, nrow = 1) +
     xlab("Number of years in window")+
-    ylab("P(correct)\n")+
+    ylab("P(match)\n")+
     ylim(0,1)+
     theme(legend.position = "null")
   
@@ -805,15 +812,15 @@ Fig2_slope_bydomain <- ggplot(proportion_wrong_series_all[linear_model == "lm",]
 
 p_correct_slope_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
   #add map
-  draw_plot(Fig2_stability_bydomain + theme(axis.title.x = element_blank()),
+  draw_plot(Fig2_slope_bydomain + theme(axis.title.x = element_blank()),
             x = 0, y = 2, width = 8, height =2) +
-  draw_plot(Fig2_slope_bydomain + theme(strip.text.x = element_blank()),
+  draw_plot(Fig2_stability_bydomain + theme(strip.text.x = element_blank()),
             x = 0, y = 0, width = 8, height =2) +
-  geom_text(aes(x = 0.25, y = 3.8, label = "a."), size = 3.5, fontface = "bold") +
+  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 3.5, fontface = "bold") +
   geom_text(aes(x = 0.25, y =2, label = "b."), size = 3.5, fontface = "bold")
 
 ggsave(p_correct_slope_merge, path = file.path("Figures"),
-       filename = "p_correct_slope_merge.jpg", height = 4, width = 8, unit = "in")
+       filename = "p_correct_slope_merge.jpg", height = 6, width = 12.5, unit = "in")
 
 
 
@@ -826,7 +833,7 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, 
   count<-nrow(out)
   #compute mean of longest series
   true_slope<-out[count,4] #find the slope of the longest series
-  true_intercept<-(out[count,7]) #find the intercept of the longest series
+  true_intercept<-(out[count,9]) #find the intercept of the longest series
   out<-out[which(out$N_years==window_length),] #only work with one window length per plot
   #create a separate frame for significant and not results
   out_sig<-out[which(out$p_value<significance),]
@@ -861,19 +868,32 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, 
 
 
 #SPECIFICALLY FOR FIGURE 1
-broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_length=3, linear_model = "lm"){
+broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_length, linear_model = "lm"){
   out<-multiple_breakups(data, linear_model = linear_model)
   years<-length(unique(out$start_year))
   maxyears<-max(out$N_years)
-  count<-nrow(out) # of total models
+  count<-nrow(out)
+  
+  #compute mean and sd of longest series for vertical lines
+  true_slope<-out[count,4] #find the slope of the longest series
+  min_true<-out[count,6] #compute max and min values for slopes we are calling true
+  max_true<-out[count,7]
+  
   out<-out[which(out$N_years==window_length),] #only work with one window length per plot
+  number_of_windows = nrow(out)
+  
   #create a separate frame for significant and not results
   out_sig<-out[which(out$p_value<significance),]
   countsig<-nrow(out_sig)#count the number of rows in the set we want to plot
   out_not<-out[which(out$p_value>significance),]
   countnot<-nrow(out_not)#count the number of rows in the set we want to plot
-  P_correct <- signif(countnot/nrow(out),2)
   mean_slope <- signif(mean(out$slope),2)
+  SD_slope <- signif(sd(out$slope),2)
+  
+  right_windows<-test_subset[which(out$slope > min_true & out$slope < max_true),]
+  count_wrong<-number_of_windows-nrow(right_windows)
+  proportion<-signif(1-count_wrong/number_of_windows,2)
+
   plot<- ggplot(data, aes(x=year, y=bray_curtis_dissimilarity_balanced_mean)) +
     theme_classic()
   if(countnot>0){ # # not significant
@@ -903,13 +923,15 @@ broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_lengt
   
   
   plot<-plot+ 
-    ggtitle(paste0(title, "   mean slope =", mean_slope, "      P(correct) = ",P_correct))+
+    ggtitle(paste0(title, "                              P(match) = ",proportion,
+                   "\nmean slope = ", mean_slope,"      SD of slope = ",SD_slope))+
     geom_point(size=0.7, fill="grey22", alpha = 0.5)+
     xlab("Year")+ylab("β diversity")
   return(plot)
 }
 
 #for figure
+
 #full EBS,  3 year window
 broken_stick_plot_w3_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], window_length = 3, title="3-year", significance=0.05)
 ggsave(broken_stick_plot_w3_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w3_full_lm_fig1.jpg")

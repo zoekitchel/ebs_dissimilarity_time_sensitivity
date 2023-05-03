@@ -18,15 +18,17 @@ library(RobustLinearReg)
 
 #linear model can be "lm" or "theil_sen_regression" or other
 
-linefit<-function (data, linear_model = "lm"){
+linefit<-function (data, linear_model = "lm", level = 0.95){
   #fit the model
   model<-eval(call(linear_model, bray_curtis_dissimilarity_balanced_mean~year, data=data))
   #create a vector of relevant outputs. We want slope, error, P value
   output<-c(min(data$year), #year the analysis started on
-            nrow(data), #number of data points the analysis includes
-            length(unique(data$year)), #number of years the analysis includes
+            length(unique(data$year)), #number of unique years the analysis includes
+            max(data$year)-min(data$year)+1, #total study duration (add one for final years)
             summary(model)$coefficients[2,1], # slope
             summary(model)$coefficients[2,2], # se for slope
+            confint(model, level = level)[2,1], #lower bound of CI for parameter
+            confint(model, level = level)[2,2], #upper bound of CI for parameter
             summary(model)$coefficients[2,4], #p value slope
             summary(model)$coefficients[1,1], # intercept
             summary(model)$coefficients[1,2], # se for intercept
