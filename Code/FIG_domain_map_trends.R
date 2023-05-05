@@ -38,27 +38,31 @@ EBS.distances_dissimilarities_allyears <-  fread(file.path("Output","EBS.distanc
 
 #also take a look at no pollock
 EBS.distances_dissimilarities_allyears_nopollock <-  fread(file.path("Output","EBS.distances_dissimilarities_allyears_nopollock.csv"))
-year_beta_bydomain_nopollock <- readRDS(file.path("Figures","Supplement","Nopollock","year_beta_bydomain_nopollock.Rds"))
-
 
 #and then calculate slopes etc.
 #slopes
-slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+slope_full <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],2)
+slope_inner <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],2)
+slope_middle <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],2)
+slope_outer <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],2)
+
+slope_se_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+                                   data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
+slope_se_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
+slope_se_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
+slope_se_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
 
 #R^2 values summary(model)
-R2_full <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_inner <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_middle <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_outer <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
 #p_values summary(model)
-p_value_full <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_inner <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_middle <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_outer <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
 
 #JACCARD (same)
@@ -120,12 +124,13 @@ BC_dissim_O_M_I <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full
   theme(legend.position = "null", strip.text = element_blank())
 
 #full
-#outer, middle, inner
 BC_dissim_F <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",]) +
   geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean)) +
   labs(x = "Year", y = "β diversity") +
   geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
               method = "lm", se = F, linetype = "longdash") +
+#  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "darkgrey",
+         #     method = "gam", se = F, linetype = "dotted") +
   theme_classic() +
   theme(legend.position = "null")
 
@@ -134,20 +139,20 @@ map_year_beta_bydomain_annotate <- ggdraw(xlim = c(0,30), ylim = c(0,20)) +
   draw_plot(BC_dissim_O_M_I + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 8) +
   draw_plot(Alaska_domains, x = 0, y =6.5, width = 10, height = 15) +
   draw_plot(BC_dissim_F + theme(axis.title.x = element_blank()), x = 10, y = 0, width = 13, height = 20) +
-  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_full,"\np = ",p_value_full)), size = 3) +
+  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_full,"+/-",slope_se_full,"\np = ",p_value_full)), size = 3) +
   draw_plot(broken_stick_plot_w3_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w10_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w20_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w35_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
-  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 1.3, y = 7.3, label = "b."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 4.3, y =7.3, label = "c."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 7.3, y =7.3, label = "d."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 10.5, y = 19.7, label = "e."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 23, y = 19.7, label = "f."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 23, y = 14.5, label = "g."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 23, y = 9.5, label = "h."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 23, y = 4.5, label = "i."), size = 3.5, fontface = "bold")
+  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 1.3, y = 7.3, label = "b."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 4.3, y =7.3, label = "c."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 7.3, y =7.3, label = "d."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 10.5, y = 19.7, label = "e."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 23, y = 19.7, label = "f."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 23, y = 14.5, label = "g."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 23, y = 9.5, label = "h."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 23, y = 4.5, label = "i."), size = 4, fontface = "bold")
   
  
 map_year_beta_bydomain_annotate 

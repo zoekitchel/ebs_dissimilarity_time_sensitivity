@@ -812,12 +812,12 @@ Fig2_slope_bydomain <- ggplot(proportion_wrong_series_all[linear_model == "lm",]
 
 p_correct_slope_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
   #add map
-  draw_plot(Fig2_slope_bydomain + theme(axis.title.x = element_blank()),
+  draw_plot(Fig2_slope_bydomain + theme(axis.title.x = element_blank(), text = element_text(size = 14)),
             x = 0, y = 2, width = 8, height =2) +
-  draw_plot(Fig2_stability_bydomain + theme(strip.text.x = element_blank()),
+  draw_plot(Fig2_stability_bydomain + theme(strip.text.x = element_blank(), text = element_text(size = 14)),
             x = 0, y = 0, width = 8, height =2) +
-  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 3.5, fontface = "bold") +
-  geom_text(aes(x = 0.25, y =2, label = "b."), size = 3.5, fontface = "bold")
+  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 0.25, y =2, label = "b."), size = 4, fontface = "bold")
 
 ggsave(p_correct_slope_merge, path = file.path("Figures"),
        filename = "p_correct_slope_merge.jpg", height = 6, width = 12.5, unit = "in")
@@ -924,7 +924,7 @@ broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_lengt
   
   plot<-plot+ 
     ggtitle(paste0(title, "                              P(match) = ",proportion,
-                   "\nmean slope = ", mean_slope,"      SD of slope = ",SD_slope))+
+                   "\nmean slope = ", mean_slope,"      SD of slopes = ",SD_slope))+
     geom_point(size=0.7, fill="grey22", alpha = 0.5)+
     xlab("Year")+ylab("β diversity")
   return(plot)
