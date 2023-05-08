@@ -391,6 +391,145 @@ year_beta_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
 
 ggsave(year_beta_bydomain_annotate, path = file.path("Figures"), filename = "year_beta_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
 
+#####################
+#######SUPPLEMENT
+####################
+
+#make function for theil
+sen <- function(..., weights = NULL) {
+  mblm::mblm(...)
+}
+
+###Visualize change over time (THEILSEN)
+ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  theme_classic()
+
+year_beta_bray_curtis_balanced_theilsenreg_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity (Bray Curtis balanced)") +
+  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), method = sen, se = F, color = "red") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  facet_wrap(~domain) +
+  theme_classic() +
+  theme(legend.position = "null")
+
+saveRDS(year_beta_bray_curtis_balanced_theilsenreg_bydomain, file.path("Figures","Supplement","Theil_Sen","year_beta_bray_curtis_balanced_theilsenreg_bydomain.Rds"))
+
+#slopes
+slope_bray_curtis_balanced_theilsen_full <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_bray_curtis_balanced_theilsen_inner <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_bray_curtis_balanced_theilsen_middle <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_bray_curtis_balanced_theilsen_outer <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+
+slope_bray_curtis_balanced_theilsen_full
+slope_bray_curtis_balanced_theilsen_inner
+slope_bray_curtis_balanced_theilsen_middle
+slope_bray_curtis_balanced_theilsen_outer
+
+#R^2 values summary(model)
+R2_bray_curtis_balanced_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_bray_curtis_balanced_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_bray_curtis_balanced_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_bray_curtis_balanced_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+
+R2_bray_curtis_balanced_theilsen_full
+R2_bray_curtis_balanced_theilsen_inner
+R2_bray_curtis_balanced_theilsen_middle
+R2_bray_curtis_balanced_theilsen_outer
+
+#p_values summary(model)
+p_value_bray_curtis_balanced_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_bray_curtis_balanced_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_bray_curtis_balanced_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_bray_curtis_balanced_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+
+p_value_bray_curtis_balanced_theilsen_full
+p_value_bray_curtis_balanced_theilsen_inner
+p_value_bray_curtis_balanced_theilsen_middle
+p_value_bray_curtis_balanced_theilsen_outer
+
+
+#place model values on plot
+year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
+  draw_plot(year_beta_bray_curtis_balanced_theilsenreg_bydomain, x = 0, y = 0, width = 10, height = 8) +
+  geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_middle, "  R^2 = ",R2_bray_curtis_balanced_theilsen_middle, "  p = ",p_value_bray_curtis_balanced_theilsen_middle))) +
+  geom_text(aes(x = 6.8, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_outer, "  R^2 = ",R2_bray_curtis_balanced_theilsen_outer, "  p = ",p_value_bray_curtis_balanced_theilsen_outer))) +
+  geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_full, "  R^2 = ",R2_bray_curtis_balanced_theilsen_full, "  p = ",p_value_bray_curtis_balanced_theilsen_full))) +
+  geom_text(aes(x = 6.9, y = 7.4, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_inner, "  R^2 = ",R2_bray_curtis_balanced_theilsen_inner, "  p = ",p_value_bray_curtis_balanced_theilsen_inner)))
+
+ggsave(year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate,
+       path = file.path("Figures","Supplement","Theil_Sen"),
+       filename = "year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
+
+
+
+###Visualize change over time (Biomass.gradient BC)
+ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_gradient_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  theme_classic()
+
+year_beta_bray_curtis_biomassgradient_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_gradient_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity (Bray Curtis biomass gradient)") +
+  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_gradient_mean), method = "lm", se = F, color = "red") +
+  scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
+  facet_wrap(~domain) +
+  theme_classic() +
+  theme(legend.position = "null")
+
+saveRDS(year_beta_bray_curtis_biomassgradient_bydomain, file.path("Figures","Supplement","Biomass_gradient","year_beta_bray_curtis_biomassgradient_bydomain.Rds"))
+
+#slopes
+slope_bray_curtis_biomass_gradient_full <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_bray_curtis_biomass_gradient_inner <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_bray_curtis_biomass_gradient_middle <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_bray_curtis_biomass_gradient_outer <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+
+slope_bray_curtis_biomass_gradient_full
+slope_bray_curtis_biomass_gradient_inner
+slope_bray_curtis_biomass_gradient_middle
+slope_bray_curtis_biomass_gradient_outer
+
+#R^2 values summary(model)
+R2_bray_curtis_biomass_gradient_full <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_bray_curtis_biomass_gradient_inner <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_bray_curtis_biomass_gradient_middle <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_bray_curtis_biomass_gradient_outer <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+
+R2_bray_curtis_biomass_gradient_full
+R2_bray_curtis_biomass_gradient_inner
+R2_bray_curtis_biomass_gradient_middle
+R2_bray_curtis_biomass_gradient_outer
+
+#p_values summary(model)
+p_value_bray_curtis_biomass_gradient_full <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_bray_curtis_biomass_gradient_inner <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_bray_curtis_biomass_gradient_middle <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_bray_curtis_biomass_gradient_outer <- round(summary(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+
+p_value_bray_curtis_biomass_gradient_full
+p_value_bray_curtis_biomass_gradient_inner
+p_value_bray_curtis_biomass_gradient_middle
+p_value_bray_curtis_biomass_gradient_outer
+
+
+#place model values on plot
+year_beta_bray_curtis_biomassgradient_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
+  draw_plot(year_beta_bray_curtis_biomassgradient_bydomain, x = 0, y = 0, width = 10, height = 8) +
+  geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_biomass_gradient_middle, "  R^2 = ",R2_bray_curtis_biomass_gradient_middle, "  p = ",p_value_bray_curtis_biomass_gradient_middle))) +
+  geom_text(aes(x = 7.1, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_biomass_gradient_outer, "  R^2 = ",R2_bray_curtis_biomass_gradient_outer, "  p = ",p_value_bray_curtis_biomass_gradient_outer))) +
+  geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_bray_curtis_biomass_gradient_full, "  R^2 = ",R2_bray_curtis_biomass_gradient_full, "  p = ",p_value_bray_curtis_biomass_gradient_full))) +
+  geom_text(aes(x = 7.1, y = 7.4, label = paste0("Slope = ",slope_bray_curtis_biomass_gradient_inner, "  R^2 = ",R2_bray_curtis_biomass_gradient_inner, "  p = ",p_value_bray_curtis_biomass_gradient_inner)))
+
+ggsave(year_beta_bray_curtis_biomassgradient_bydomain_annotate, path = file.path("Figures","Supplement","Biomass_gradient"),
+       filename = "year_beta_bray_curtis_biomassgradient_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
+
+
 
 ###Visualize change over time (Jaccard)
 ggplot(EBS.distances_dissimilarities_allyears) +
@@ -448,9 +587,9 @@ p_value_jaccard_outer
 year_beta_jaccard_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
   draw_plot(year_beta_jaccard_bydomain, x = 0, y = 0, width = 10, height = 8) +
   geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_jaccard_middle, "  R^2 = ",R2_jaccard_middle, "  p = ",p_value_jaccard_middle))) +
-  geom_text(aes(x = 6.8, y = 0.8, label = paste0("Slope = ",slope_jaccard_outer, "  R^2 = ",R2_jaccard_outer, "  p = ",p_value_jaccard_outer))) +
+  geom_text(aes(x = 7.1, y = 0.8, label = paste0("Slope = ",slope_jaccard_outer, "  R^2 = ",R2_jaccard_outer, "  p = ",p_value_jaccard_outer))) +
   geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_jaccard_full, "  R^2 = ",R2_jaccard_full, "  p = ",p_value_jaccard_full))) +
-  geom_text(aes(x = 6.5, y = 7.4, label = paste0("Slope = ",slope_jaccard_inner, "  R^2 = ",R2_jaccard_inner, "  p = ",p_value_jaccard_inner)))
+  geom_text(aes(x = 7.1, y = 7.4, label = paste0("Slope = ",slope_jaccard_inner, "  R^2 = ",R2_jaccard_inner, "  p = ",p_value_jaccard_inner)))
 
 ggsave(year_beta_jaccard_bydomain_annotate, path = file.path("Figures","Supplement","Jaccard"), filename = "year_beta_jaccard_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
 
