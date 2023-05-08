@@ -18,10 +18,14 @@ library(RobustLinearReg)
 
 #linear model can be "lm" or "theil_sen_regression" or other
 
-linefit<-function (data, linear_model = "lm", level = 0.95){
+linefit<-function (data, linear_model = "lm", level = 0.95, beta_term = "bray_curtis_dissimilarity_balanced_mean"){
   #fit the model
-  model<-eval(call(linear_model, bray_curtis_dissimilarity_balanced_mean~year, data=data))
-  #create a vector of relevant outputs. We want slope, error, P value
+  if(linear_model == "theil_sen_regression"){
+    model<-eval(call(linear_model, bray_curtis_dissimilarity_balanced_mean~year, data=data))
+    #create a vector of relevant outputs. We want slope, error, P value
+  }else{
+    model<-eval(call(linear_model, data[[beta_term]]~year, data=data))
+  }  #create a vector of relevant outputs. We want slope, error, P value
   output<-c(min(data$year), #year the analysis started on
             length(unique(data$year)), #number of unique years the analysis includes
             max(data$year)-min(data$year)+1, #total study duration (add one for final years)
