@@ -1113,7 +1113,7 @@ heatmap_year_obs_pmatch_jaccard <- ggplot(subsampling_output_full_jaccard.u, aes
                                                                                                    x = factor(study_duration), fill= percent_match)) + 
   geom_tile() +
   #geom_text(aes(label= signif(percent_match,2)),  size =3) +
-  scale_fill_turnovern(colors = c("#0d2bb5","#0B59B3","#1BA6D7", "#2EE8ED","#86FAF1"), 
+  scale_fill_gradientn(colors = c("#0d2bb5","#0B59B3","#1BA6D7", "#2EE8ED","#86FAF1"), 
                        guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
                                               title.position = "top",
                                               title.hjust = 0.5)) +
@@ -1128,16 +1128,15 @@ ggsave(heatmap_year_obs_pmatch_jaccard, path = file.path("Figures","Supplement",
 
 
 
-#EDIT BREAKS AND LABELS
 #heat map with # years,#obs, and slope value
 heatmap_year_obs_slope_jaccard <- ggplot(subsampling_output_full_jaccard.u, aes(y = factor(N_data), x = factor(study_duration), fill= mean_slope)) + 
   geom_tile() +
   #geom_text(aes(label= signif(mean_slope,2)),  size =3) +
-  scale_fill_turnovern(
-    breaks = c(-0.0017,-0.001,Full_slope_jaccard,0,max(subsampling_output_full_jaccard.u$mean_slope)),
-    #  colours = c("#65469c","#3478A2","#72D4AC","white","#F9DFCC","#F6B38F","#DE2D43","#7F1F5A"),
-    #   labels =c("-0.002", "",paste0("-0.00057\nlong\nterm\nslope"), "","0.0011"),
-    # guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
+  scale_fill_gradientn(
+    breaks = c(-0.001,Full_slope_jaccard,max(subsampling_output_full_jaccard.u$mean_slope)),
+      colours = c("#65469c","#3478A2","#72D4AC","#c3fae3","#ebfcf5","white","#F9DFCC","#F6B38F","#DE2D43","#7F1F5A"),
+       labels =c("-0.001",paste0("-7.8e5\nlong\nterm\nslope"),"0.0012"),
+     guide = guide_colorbar(frame.colour = "black", ticks.colour = "black",
     title.position = "top",
     title.hjust = 0.5)) +
   labs(x = "Study duration", y = "Number of years of data", fill = "Mean slope") +
@@ -1154,7 +1153,9 @@ ggsave(heatmap_year_obs_slope_jaccard, path = file.path("Figures","Supplement","
 heatmap_year_obs_slope_SD_jaccard <- ggplot(subsampling_output_full_jaccard.u, aes(y = factor(N_data), x = factor(study_duration), fill= slope_SD)) + 
   geom_tile() +
   #geom_text(aes(label= signif(slope_SD,2)),  size =3) +
-  scale_fill_turnovern(colors = c("#FEFFD5","yellow","orange","darkred","#660000"),
+  scale_fill_gradientn(colors = c("#FEFFD5","yellow","orange","darkred","#660000"),
+                       labels = c("0","","0.004","","0.008"),
+                       breaks = seq(0.000,0.008,0.002),
                        guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
                                               title.position = "top",
                                               title.hjust = 0.5)) +
@@ -1201,7 +1202,7 @@ f10_d20_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean
 
 subsample_viz_f10_d20_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),], 
-            aes(x = year, y = jaccard_estimate), color = "black",linetype ="dashed", se = F, method = "lm") +
+            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black",linetype ="solid", se = F, method = "lm") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),],
@@ -1222,7 +1223,7 @@ f30_d30_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean
 
 subsample_viz_f30_d30_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),], 
-            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black", linetype = "longdash", method = "lm", se = F) +
+            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black", linetype = "solid", method = "lm", se = F) +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),],
