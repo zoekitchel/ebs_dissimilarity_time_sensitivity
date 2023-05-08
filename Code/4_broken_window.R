@@ -318,8 +318,8 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #the 95%. CI of the slope of the longest series, for a given window length, allow user to change level of significance
 
 
-stability_time <-function(data, min_percent=95, linear_model = "lm", significance = 0.05, level = 0.95){#returns a number 
-  test<-multiple_breakups(data, linear_model = linear_model, level = 0.95)
+stability_time <-function(data, min_percent=95, linear_model = "lm", significance = 0.05, level = 0.95, beta_term = "bray_curtis_dissimilarity_balanced_mean"){#returns a number 
+  test<-multiple_breakups(data, linear_model = linear_model, level = 0.95, beta_term = beta_term)
   count<-nrow(test)
   #compute mean and sd of longest series for vertical lines
   true_slope<-test[count,4] #find the slope of the longest series
@@ -550,8 +550,8 @@ proportion_wrong(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linea
 #over all the unique window lengths. Will output a data frame with a window length and proportion
 #of outputs with slope that is not within 95% confidence level, plus average r square for that window length
 
-proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm"){#returns a single value between 0 and 1
-  test<-multiple_breakups(data, linear_model = linear_model)
+proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_balanced_mean"){#returns a single value between 0 and 1
+  test<-multiple_breakups(data, linear_model = linear_model, beta_term = beta_term)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
   true_p<-test[count,8] #p of longest series
@@ -630,6 +630,51 @@ proportion_wrong_series_all<-rbind(proportion_wrong_series_full_lm,
 
 saveRDS(proportion_wrong_series_all, file.path("Output","proportion_wrong_series_all.Rds"))
 
+#############
+#SUPPLEMENT
+#############
+#biomass gradient
+proportion_wrong_series_full_lm_biomassgradient <- proportion_wrong_series(EBS.dissim.simp.BC.gradient[domain == "Full"], beta_term = "bray_curtis_dissimilarity_gradient_mean", significance = 0.05)
+proportion_wrong_series_full_lm_biomassgradient[,domain := "Full"][,linear_model := "lm"]
+proportion_wrong_series_inner_lm_biomassgradient <- proportion_wrong_series(EBS.dissim.simp.BC.gradient[domain == "Inner"], beta_term = "bray_curtis_dissimilarity_gradient_mean", significance = 0.05)
+proportion_wrong_series_inner_lm_biomassgradient[,domain := "Inner"][,linear_model := "lm"]
+proportion_wrong_series_outer_lm_biomassgradient <- proportion_wrong_series(EBS.dissim.simp.BC.gradient[domain == "Outer"], beta_term = "bray_curtis_dissimilarity_gradient_mean", significance = 0.05)
+proportion_wrong_series_outer_lm_biomassgradient[,domain := "Outer"][,linear_model := "lm"]
+proportion_wrong_series_middle_lm_biomassgradient <- proportion_wrong_series(EBS.dissim.simp.BC.gradient[domain == "Middle"], beta_term = "bray_curtis_dissimilarity_gradient_mean", significance = 0.05)
+proportion_wrong_series_middle_lm_biomassgradient[,domain := "Middle"][,linear_model := "lm"]
+
+
+proportion_wrong_series_biomassgradient<-rbind(proportion_wrong_series_full_lm_biomassgradient,
+                                   proportion_wrong_series_inner_lm_biomassgradient,
+                                   proportion_wrong_series_middle_lm_biomassgradient,
+                                   proportion_wrong_series_outer_lm_biomassgradient)
+
+saveRDS(proportion_wrong_series_biomassgradient, file.path(
+  "Output","Supplement","Biomass_gradient","proportion_wrong_series_biomassgradient.Rds"))
+
+
+#jaccard
+proportion_wrong_series_full_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_full_lm_jaccard[,domain := "Full"][,linear_model := "lm"]
+proportion_wrong_series_inner_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_inner_lm_jaccard[,domain := "Inner"][,linear_model := "lm"]
+proportion_wrong_series_outer_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_outer_lm_jaccard[,domain := "Outer"][,linear_model := "lm"]
+proportion_wrong_series_middle_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_middle_lm_jaccard[,domain := "Middle"][,linear_model := "lm"]
+
+
+
+proportion_wrong_series_jaccard<-rbind(proportion_wrong_series_full_lm_jaccard,
+                                    proportion_wrong_series_inner_lm_jaccard,
+                                    proportion_wrong_series_middle_lm_jaccard, 
+                                   proportion_wrong_series_outer_lm_jaccard)
+
+saveRDS(proportion_wrong_series_jaccard, file.path("Output","Supplement","Jaccard","proportion_wrong_series_jaccard.Rds"))
+
+
+
+###############
 #proportion wrong before stability (must edit)
 proportion_wrong_before_stability<- function(data, significance=0.05,
                                              min_percent=95, error_multiplyer=1,
@@ -706,9 +751,9 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
 }
 
 #simplify for figure 2
-wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm", point_color = "black"){
-  threshold<-stability_time(data, min_percent, error_multiplyer, linear_model = linear_model)#find stability threshold
-  wrongness<-proportion_wrong_series(data, significance)
+wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm", point_color = "black", beta_term = "bray_curtis_dissimilarity_balanced_mean"){
+  threshold<-stability_time(data, min_percent, error_multiplyer, linear_model = linear_model, beta_term = beta_term)#find stability threshold
+  wrongness<-proportion_wrong_series(data, significance, beta_term = beta_term, linear_model = linear_model)
   maxyears<-max(wrongness$window_length)
   plot<- ggplot(wrongness) +
     theme_classic() +
@@ -723,23 +768,70 @@ wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_mul
 
 #reorder factors
 proportion_wrong_series_all[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+proportion_wrong_series_biomassgradient[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+proportion_wrong_series_jaccard[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
 
 
 #FOR FIGURE 2
   #linear model
-  #full EBS
-  wrongness_plot_full_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05, min_percent = 99)
+  wrongness_plot_full_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, lm()", significance=0.05)
   ggsave(wrongness_plot_full_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_full_lm_fig2.jpg")
   
-  wrongness_plot_inner_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05, point_color = "#AA4499", min_percent = 99)
+  wrongness_plot_inner_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, lm()", significance=0.05, point_color = "#AA4499")
   ggsave(wrongness_plot_inner_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_inner_lm_fig2.jpg")
   
-  wrongness_plot_middle_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05, point_color = "#44AA99", min_percent = 99)
+  wrongness_plot_middle_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, lm()", significance=0.05, point_color = "#44AA99")
   ggsave(wrongness_plot_middle_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_middle_lm_fig2.jpg")
   
-  wrongness_plot_outer_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05, point_color = "#999933", min_percent = 99)
+  wrongness_plot_outer_lm_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, lm()", significance=0.05, point_color = "#999933")
   ggsave(wrongness_plot_outer_lm_fig2, path = file.path("Figures"), filename = "wrongness_plot_outer_lm_fig2.jpg")
 
+################  
+###SUPPLEMENT###
+################  
+#theil
+  wrongness_plot_full_theilsen_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Full"], title="Full EBS, Theil-Sen",linear_model = "theil_sen_regression", significance=0.05)
+  ggsave(wrongness_plot_full_theilsen_fig2, path = file.path("Figures", "Supplement","Theil_Sen"), filename = "wrongness_plot_full_theilsen_fig2.jpg")
+  
+  wrongness_plot_inner_theilsen_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Inner"], title="Inner EBS, Theil-Sen",linear_model = "theil_sen_regression", significance=0.05, point_color = "#AA4499")
+  ggsave(wrongness_plot_inner_theilsen_fig2, path = file.path("Figures", "Supplement","Theil_Sen"), filename = "wrongness_plot_inner_theilsen_fig2.jpg")
+  
+  wrongness_plot_middle_theilsen_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Middle"], title="Middle EBS, Theil-Sen",linear_model = "theil_sen_regression", significance=0.05, point_color = "#44AA99")
+  ggsave(wrongness_plot_middle_theilsen_fig2, path = file.path("Figures", "Supplement","Theil_Sen"), filename = "wrongness_plot_middle_theilsen_fig2.jpg")
+  
+  wrongness_plot_outer_theilsen_fig2 <- wrongness_plot_fig2(EBS.dissim.simp[domain == "Outer"], title="Outer EBS, Theil-Sen",linear_model = "theil_sen_regression", significance=0.05, point_color = "#999933")
+  ggsave(wrongness_plot_outer_theilsen_fig2, path = file.path("Figures", "Supplement","Theil_Sen"), filename = "wrongness_plot_outer_theilsen_fig2.jpg")
+  
+
+  #biomassgradient
+  wrongness_plot_full_lm_biomassgradient_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.BC.gradient[domain == "Full"], title="Full EBS, lm()", beta_term = "bray_curtis_dissimilarity_gradient_mean", significance=0.05)
+  ggsave(wrongness_plot_full_lm_biomassgradient_fig2, path = file.path("Figures", "Supplement","Biomass_gradient"), filename = "wrongness_plot_full_lm_biomassgradient_fig2.jpg")
+  
+  wrongness_plot_inner_lm_biomassgradient_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.BC.gradient[domain == "Inner"], title="Inner EBS, lm()", beta_term = "bray_curtis_dissimilarity_gradient_mean", significance=0.05, point_color = "#AA4499")
+  ggsave(wrongness_plot_inner_lm_biomassgradient_fig2, path = file.path("Figures", "Supplement","Biomass_gradient"), filename = "wrongness_plot_inner_lm_biomassgradient_fig2.jpg")
+  
+  wrongness_plot_middle_lm_biomassgradient_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.BC.gradient[domain == "Middle"], title="Middle EBS, lm()", beta_term = "bray_curtis_dissimilarity_gradient_mean", significance=0.05, point_color = "#44AA99")
+  ggsave(wrongness_plot_middle_lm_biomassgradient_fig2, path = file.path("Figures", "Supplement","Biomass_gradient"), filename = "wrongness_plot_middle_lm_biomassgradient_fig2.jpg")
+  
+  wrongness_plot_outer_lm_biomassgradient_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.BC.gradient[domain == "Outer"], title="Outer EBS, lm()", beta_term = "bray_curtis_dissimilarity_gradient_mean" ,significance=0.05, point_color = "#999933")
+  ggsave(wrongness_plot_outer_lm_biomassgradient_fig2, path = file.path("Figures", "Supplement","Biomass_gradient"), filename = "wrongness_plot_outer_lm_biomassgradient_fig2.jpg")
+  
+  #jaccard
+  wrongness_plot_full_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], title="Full EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05)
+  ggsave(wrongness_plot_full_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_full_lm_jaccard_turnover_fig2.jpg")
+  
+  wrongness_plot_inner_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], title="Inner EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05, point_color = "#AA4499")
+  ggsave(wrongness_plot_inner_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_inner_lm_jaccard_turnover_fig2.jpg")
+  
+  wrongness_plot_middle_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], title="Middle EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05, point_color = "#44AA99")
+  ggsave(wrongness_plot_middle_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_middle_lm_jaccard_turnover_fig2.jpg")
+  
+  wrongness_plot_outer_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], title="Outer EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean" ,significance=0.05, point_color = "#999933")
+  ggsave(wrongness_plot_outer_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_outer_lm_jaccard_turnover_fig2.jpg")
+  
+  
+################  
+################  
 
 #plot
 #linear model
@@ -782,26 +874,89 @@ ggsave(wrongness_plot_merge, path = file.path("Figures"),
 #ALTENRATIVELY, FOR FIGURE 2,  USE FACET
   #reorder factors
   proportion_wrong_series_all[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
-  
+  proportion_wrong_series_biomassgradient[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+  proportion_wrong_series_jaccard[,Domain := factor(domain, levels = c("Full","Outer","Middle","Inner"))]
+
   #add stability point
-  proportion_wrong_series_all[,long_term_stable := ifelse(Domain == "Full",stability_time(EBS.dissim.simp[domain == "Full"]),
+  proportion_wrong_series_all[linear_model == "lm",long_term_stable := ifelse(Domain == "Full",stability_time(EBS.dissim.simp[domain == "Full"]),
                                                           ifelse(Domain == "Inner", stability_time(EBS.dissim.simp[domain == "Inner"]),
                                                                  ifelse(Domain == "Middle", stability_time(EBS.dissim.simp[domain == "Middle"]),
-                                                                        stability_time(EBS.dissim.simp[domain == "Outer"])
-  )))]
+              ifelse(Domain == "Outer",stability_time(EBS.dissim.simp[domain == "Outer"]),NA))))]
+  
+  proportion_wrong_series_all[linear_model == "theil_sen",long_term_stable := ifelse(Domain == "Full",stability_time(EBS.dissim.simp[domain == "Full"], linear_model = "theil_sen_regression"),
+                                                          ifelse(Domain == "Inner", stability_time(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression"),
+                                                                 ifelse(Domain == "Middle", stability_time(EBS.dissim.simp[domain == "Middle"], linear_model = "theil_sen_regression"),
+                                                                        ifelse(Domain == "Outer",stability_time(EBS.dissim.simp[domain == "Outer"], linear_model = "theil_sen_regression"),NA))))]
+  
+  proportion_wrong_series_biomassgradient[,long_term_stable := ifelse(Domain == "Full",stability_time(EBS.dissim.simp.BC.gradient[domain == "Full"],beta_term = "bray_curtis_dissimilarity_gradient_mean"),
+                                                          ifelse(Domain == "Inner", stability_time(EBS.dissim.simp.BC.gradient[domain == "Inner"],beta_term = "bray_curtis_dissimilarity_gradient_mean"),
+                                                                 ifelse(Domain == "Middle", stability_time(EBS.dissim.simp.BC.gradient[domain == "Middle"],beta_term = "bray_curtis_dissimilarity_gradient_mean"),
+                                                                        ifelse(Domain == "Outer",stability_time(EBS.dissim.simp.BC.gradient[domain == "Outer"],beta_term = "bray_curtis_dissimilarity_gradient_mean"),NA))))]
+  
+  
+  proportion_wrong_series_jaccard[,long_term_stable := ifelse(Domain == "Full" ,stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], beta_term = "jaccard_dissimilarity_turnover_mean"),
+                                                          ifelse(Domain == "Inner" , stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], beta_term = "jaccard_dissimilarity_turnover_mean"),
+                                                                 ifelse(Domain == "Middle" , stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], beta_term = "jaccard_dissimilarity_turnover_mean"),
+                                                                        ifelse(Domain == "Outer" ,stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], beta_term = "jaccard_dissimilarity_turnover_mean"),NA))))]
+  
   
   #long term slopes
-  #slopes
+  #slopes BC balanced
   slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
   slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
   slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
   slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+
+  #THEILSEN
+  slope_full_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  
+  #BIOMASSGRADIENT
+  slope_full_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  
+  #JACCARD
+  slope_full_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  
+  
+  
+  
+  
+  
+  
   
   #add long term slope
-  proportion_wrong_series_all[,long_term_slope := ifelse(Domain == "Full",slope_full,ifelse(Domain == "Inner", slope_inner, ifelse(
-    Domain == "Middle", slope_middle, slope_outer
-  )))]
+  proportion_wrong_series_all[linear_model == "lm",long_term_slope := ifelse(Domain == "Full",slope_full,
+                                                                           ifelse(Domain == "Inner", slope_inner,
+                                                                            ifelse(Domain == "Middle", slope_middle,
+                                                                              ifelse(Domain == "Outer",slope_outer,NA))))]
   
+  proportion_wrong_series_all[linear_model == "theil_sen",long_term_slope := ifelse(Domain == "Full",slope_full_theilsen,
+                                                          ifelse(Domain == "Inner", slope_inner_theilsen,
+                                                                 ifelse(Domain == "Middle", slope_middle_theilsen,
+                                                                        ifelse(Domain == "Outer",slope_outer_theilsen,NA))))]
+  
+  proportion_wrong_series_biomassgradient[,long_term_slope := ifelse(Domain == "Full",slope_full_biomassgradient,
+                                                                             ifelse(Domain == "Inner", slope_inner_biomassgradient,
+                                                                                    ifelse(Domain == "Middle", slope_middle_biomassgradient,
+                                                                                           ifelse(Domain == "Outer",slope_outer_biomassgradient,NA))))]
+  
+  
+  proportion_wrong_series_jaccard[,long_term_slope := ifelse(Domain == "Full",slope_full_jaccard,
+                                                                             ifelse(Domain == "Inner", slope_inner_jaccard,
+                                                                                    ifelse(Domain == "Middle", slope_middle_jaccard,
+                                                                                           ifelse(Domain == "Outer",slope_outer_jaccard,NA))))]
+  
+
+
+
   
   #plot wrongness without function, but faceted
   Fig2_stability_bydomain <- ggplot(proportion_wrong_series_all[linear_model == "lm",]) +
@@ -840,7 +995,126 @@ ggsave(p_correct_slope_merge, path = file.path("Figures"),
        filename = "p_correct_slope_merge.jpg", height = 6, width = 12.5, unit = "in")
 
 
+#####################
+####SUPPLEMENT
+#####################
 
+###THEILSEN
+Fig2_stability_bydomain_theilsen <- ggplot(proportion_wrong_series_all[linear_model == "theil_sen",]) +
+  theme_classic() +
+  geom_vline(aes(xintercept = long_term_stable), linetype = 3, color="grey38") +
+  geom_point(aes(y = 1-proportion_wrong, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("P(match)\n")+
+  ylim(0,1)+
+  theme(legend.position = "null")
+
+Fig2_slope_bydomain_theilsen <- ggplot(proportion_wrong_series_all[linear_model == "theil_sen",]) +
+  theme_classic() +
+  geom_hline(aes(yintercept = long_term_slope), color = "red", linetype = "dashed") +
+  geom_point(aes(y = avg_slope, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("Average slope")+
+  theme(legend.position = "null")
+
+#merge stability plot and slope plot
+
+p_correct_slope_theilsen_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
+  #add map
+  draw_plot(Fig2_slope_bydomain_theilsen + theme(axis.title.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 2, width = 8, height =2) +
+  draw_plot(Fig2_stability_bydomain_theilsen + theme(strip.text.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 0, width = 8, height =2) +
+  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 0.25, y =2, label = "b."), size = 4, fontface = "bold")
+
+ggsave(p_correct_slope_theilsen_merge, path = file.path("Figures","Supplement","Theil_Sen"),
+       filename = "p_correct_slope_theilsen_merge.jpg", height = 6, width = 12.5, unit = "in")
+
+
+###BIOMASSGRADIENT
+Fig2_stability_bydomain_biomassgradient <- ggplot(proportion_wrong_series_biomassgradient) +
+  theme_classic() +
+  geom_vline(aes(xintercept = long_term_stable), linetype = 3, color="grey38") +
+  geom_point(aes(y = 1-proportion_wrong, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("P(match)\n")+
+  ylim(0,1)+
+  theme(legend.position = "null")
+
+Fig2_slope_bydomain_biomassgradient <- ggplot(proportion_wrong_series_biomassgradient) +
+  theme_classic() +
+  geom_hline(aes(yintercept = long_term_slope), color = "red", linetype = "dashed") +
+  geom_point(aes(y = avg_slope, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("Average slope")+
+  theme(legend.position = "null")
+
+#merge stability plot and slope plot
+
+p_correct_slope_biomassgradient_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
+  #add map
+  draw_plot(Fig2_slope_bydomain_biomassgradient + theme(axis.title.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 2, width = 8, height =2) +
+  draw_plot(Fig2_stability_bydomain_biomassgradient + theme(strip.text.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 0, width = 8, height =2) +
+  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 0.25, y =2, label = "b."), size = 4, fontface = "bold")
+
+ggsave(p_correct_slope_biomassgradient_merge, path = file.path("Figures","Supplement","Biomass_gradient"),
+       filename = "p_correct_slope_biomassgradient_merge.jpg", height = 6, width = 12.5, unit = "in")
+
+
+###JACCARD
+Fig2_stability_bydomain_jaccard <- ggplot(proportion_wrong_series_jaccard) +
+  theme_classic() +
+  geom_vline(aes(xintercept = long_term_stable), linetype = 3, color="grey38") +
+  geom_point(aes(y = 1-proportion_wrong, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("P(match)\n")+
+  ylim(0,1)+
+  theme(legend.position = "null")
+
+Fig2_slope_bydomain_jaccard <- ggplot(proportion_wrong_series_jaccard) +
+  theme_classic() +
+  geom_hline(aes(yintercept = long_term_slope), color = "red", linetype = "dashed") +
+  geom_point(aes(y = avg_slope, x = window_length, color = Domain))+
+  scale_color_manual(values = c("black","#999933", "#44AA99","#AA4499")) +
+  facet_wrap(~Domain, nrow = 1) +
+  xlab("Number of years in window")+
+  ylab("Average slope")+
+  theme(legend.position = "null")
+
+#merge stability plot and slope plot
+
+p_correct_slope_jaccard_merge <- ggdraw(xlim = c(0, 8), ylim = c(0, 4)) +
+  #add map
+  draw_plot(Fig2_slope_bydomain_jaccard + theme(axis.title.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 2, width = 8, height =2) +
+  draw_plot(Fig2_stability_bydomain_jaccard + theme(strip.text.x = element_blank(), text = element_text(size = 14)),
+            x = 0, y = 0, width = 8, height =2) +
+  geom_text(aes(x = 0.25, y = 3.95, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 0.25, y =2, label = "b."), size = 4, fontface = "bold")
+
+ggsave(p_correct_slope_jaccard_merge, path = file.path("Figures","Supplement","Jaccard"),
+       filename = "p_correct_slope_jaccard_merge.jpg", height = 6, width = 12.5, unit = "in")
+
+
+
+
+
+
+###################
 #now for a function that plots all the lines by window length
 
 broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, linear_model = "lm"){
