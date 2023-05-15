@@ -122,6 +122,7 @@ for (i in c(2,3,5,10,15,20,25,30)){ #number of years of data
 #save output as csv
 fwrite(subsampling_output_full, file.path("Output","subsampling_output_full.csv"))
 
+subsampling_output_full<-fread(file.path("Output","subsampling_output_full.csv"))
 #plot
 
 #slope of full dataset

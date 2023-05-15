@@ -93,6 +93,18 @@ p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
 p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
 p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
+#predicted values to show gams
+bray_curtis_balanced_gam_full_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+bray_curtis_balanced_gam_inner_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+bray_curtis_balanced_gam_middle_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+bray_curtis_balanced_gam_outer_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+
+EBS.distances_dissimilarities_allyears[Domain == "Full",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_full_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Inner",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_inner_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Middle",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_middle_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Outer",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_outer_mod)]
+
+
 
 #THEIL SEN
 #slopes
@@ -196,6 +208,7 @@ BC_dissim_O_M_I <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full
   geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = Domain), size = 1) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
   geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black", method = "lm", se = F, linetype = "longdash", linewidth = 0.6) +
+  geom_line(aes(x = year, y = pred_BC_balanced_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   scale_color_manual(values = c("#999933", "#44AA99","#AA4499")) +
   facet_wrap(~Domain) +
   theme_classic() +
@@ -207,8 +220,7 @@ BC_dissim_F <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",])
   labs(x = "Year", y = "β diversity") +
   geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
               method = "lm", se = F, linetype = "longdash") +
-#  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "darkgrey",
-         #     method = "gam", se = F, linetype = "dotted") +
+  geom_line(aes(x = year, y = pred_BC_balanced_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   theme_classic() +
   theme(legend.position = "null")
 
@@ -217,7 +229,12 @@ map_year_beta_bydomain_annotate <- ggdraw(xlim = c(0,30), ylim = c(0,20)) +
   draw_plot(BC_dissim_O_M_I + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 8) +
   draw_plot(Alaska_domains, x = 0, y =6.5, width = 10, height = 15) +
   draw_plot(BC_dissim_F + theme(axis.title.x = element_blank()), x = 10, y = 0, width = 13, height = 20) +
-  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_full,"+/-",slope_se_full,"\np = ",p_value_full)), size = 3) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 18, yend = 18), linetype = "longdash", linewidth = 0.8) +
+  geom_text(aes(x = 13, y = 18, label = paste0("Linear model\nslope = ",
+     slope_full,"+/-",slope_se_full,"\np = ",p_value_full,"\nR-squared = ",R2_full)), size = 3) +
+  geom_text(aes(x = 13, y = 3, label = paste0("GAM\nedf = 7.74",
+                                               "\np = 1.04e-6","\nadj. R-squared = 0.73")), size = 3) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 3, yend = 3), linetype = "dashed", linewidth = 0.8, color = "darkgrey") +
   draw_plot(broken_stick_plot_w3_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w10_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w20_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
@@ -300,6 +317,7 @@ map_year_beta_bydomain_annotate_theilsen
 ggsave(map_year_beta_bydomain_annotate_theilsen, path = file.path("Figures","Supplement","Theil_Sen"), filename = "map_year_beta_bydomain_annotate_theilsen.jpg", height =5, width = 13.5)
 
 #biomassgradient component of BC dissimilarity
+
 #outer, middle, inner
 BC_dissim_O_M_I_biomassgradient <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full",]) +
   geom_point(aes(x = year, y = bray_curtis_dissimilarity_gradient_mean, color = Domain), size = 1) +
