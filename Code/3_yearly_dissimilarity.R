@@ -330,41 +330,47 @@ EBS.distances_dissimilarities_allyears <- rbind(EBS.distances_dissimilarities_al
 
 #GAM for plot
 
-bray_curtis_balanced_gam_full_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
-bray_curtis_balanced_gam_inner_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
-bray_curtis_balanced_gam_middle_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
-bray_curtis_balanced_gam_outer_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+bray_curtis_total_gam_full_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+bray_curtis_total_gam_inner_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+bray_curtis_total_gam_middle_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+bray_curtis_total_gam_outer_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
 
 #linear models for comparison
-bray_curtis_balanced_lm_full_mod <- lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",])
-bray_curtis_balanced_lm_inner_mod <- lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
-bray_curtis_balanced_lm_middle_mod <- lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
-bray_curtis_balanced_lm_outer_mod <- lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+bray_curtis_total_lm_full_mod <- lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+bray_curtis_total_lm_inner_mod <- lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+bray_curtis_total_lm_middle_mod <- lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+bray_curtis_total_lm_outer_mod <- lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
 
 #GAM always lower
-MuMIn::AICc(bray_curtis_balanced_gam_full_mod)- MuMIn::AICc(bray_curtis_balanced_lm_full_mod)
-MuMIn::AICc(bray_curtis_balanced_gam_inner_mod)- MuMIn::AICc(bray_curtis_balanced_lm_inner_mod)
-MuMIn::AICc(bray_curtis_balanced_gam_middle_mod)- MuMIn::AICc(bray_curtis_balanced_lm_middle_mod)
-MuMIn::AICc(bray_curtis_balanced_gam_outer_mod)- MuMIn::AICc(bray_curtis_balanced_lm_outer_mod)
+MuMIn::AICc(bray_curtis_total_gam_full_mod)- MuMIn::AICc(bray_curtis_total_lm_full_mod)
+MuMIn::AICc(bray_curtis_total_gam_inner_mod)- MuMIn::AICc(bray_curtis_total_lm_inner_mod)
+MuMIn::AICc(bray_curtis_total_gam_middle_mod)- MuMIn::AICc(bray_curtis_total_lm_middle_mod)
+MuMIn::AICc(bray_curtis_total_gam_outer_mod)- MuMIn::AICc(bray_curtis_total_lm_outer_mod)
+
+#rsquared
+summary(bray_curtis_total_gam_full_mod)
+summary(bray_curtis_total_gam_inner_mod)
+summary(bray_curtis_total_gam_middle_mod)
+summary(bray_curtis_total_gam_outer_mod)
 
 #add predicted values
-EBS.distances_dissimilarities_allyears[domain == "Full", b_divers_gam_pred := predict(bray_curtis_balanced_gam_full_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Inner", b_divers_gam_pred := predict(bray_curtis_balanced_gam_inner_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Outer", b_divers_gam_pred := predict(bray_curtis_balanced_gam_outer_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Middle", b_divers_gam_pred := predict(bray_curtis_balanced_gam_middle_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Full", b_divers_gam_pred := predict(bray_curtis_total_gam_full_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Inner", b_divers_gam_pred := predict(bray_curtis_total_gam_inner_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Outer", b_divers_gam_pred := predict(bray_curtis_total_gam_outer_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Middle", b_divers_gam_pred := predict(bray_curtis_total_gam_middle_mod)]
 
 
-###Visualize change over time (Bray Curtis Balanced)
+###Visualize change over time (Bray Curtis Total)
 ggplot(EBS.distances_dissimilarities_allyears) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = domain)) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   theme_classic()
   
 year_beta_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
-    geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
+    geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = domain)) +
     labs(color = "Domain", x = "Year", y = "β diversity") +
-    geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), method = "lm", se = F, color = "red") +
+    geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_total_mean), method = "lm", se = F, color = "red") +
     geom_line(aes(x = year, y = b_divers_gam_pred), color = "darkgrey", linewidth = 1) +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
     facet_wrap(~domain) +
@@ -376,10 +382,10 @@ saveRDS(year_beta_bydomain, file.path("Figures","year_beta_bydomain.Rds"))
 
 
 #slopes
-slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
 
 slope_full
 slope_inner
@@ -387,10 +393,10 @@ slope_middle
 slope_outer
 
 #slopes
-slope_se_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
-slope_se_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
-slope_se_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
-slope_se_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
+slope_se_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
+slope_se_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
+slope_se_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
+slope_se_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
 
 slope_se_full
 slope_se_inner
@@ -398,10 +404,10 @@ slope_se_middle
 slope_se_outer
 
 #R^2 values summary(model)
-R2_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
 R2_full
 R2_inner
@@ -409,10 +415,10 @@ R2_middle
 R2_outer
 
 #p_values summary(model)
-p_value_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
 p_value_full
 p_value_inner
@@ -434,80 +440,80 @@ ggsave(year_beta_bydomain_annotate, path = file.path("Figures"), filename = "yea
 #######SUPPLEMENT
 ####################
 
-bray_curtis_balanced_theilsen_full_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",])
-bray_curtis_balanced_theilsen_inner_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
-bray_curtis_balanced_theilsen_middle_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
-bray_curtis_balanced_theilsen_outer_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+bray_curtis_total_theilsen_full_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+bray_curtis_total_theilsen_inner_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+bray_curtis_total_theilsen_middle_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+bray_curtis_total_theilsen_outer_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
 
-EBS.distances_dissimilarities_allyears[domain == "Full", b_divers_theilsen_pred := predict(bray_curtis_balanced_theilsen_full_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Inner", b_divers_theilsen_pred := predict(bray_curtis_balanced_theilsen_inner_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Outer", b_divers_theilsen_pred := predict(bray_curtis_balanced_theilsen_outer_mod)]
-EBS.distances_dissimilarities_allyears[domain == "Middle", b_divers_theilsen_pred := predict(bray_curtis_balanced_theilsen_middle_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Full", b_divers_theilsen_pred := predict(bray_curtis_total_theilsen_full_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Inner", b_divers_theilsen_pred := predict(bray_curtis_total_theilsen_inner_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Outer", b_divers_theilsen_pred := predict(bray_curtis_total_theilsen_outer_mod)]
+EBS.distances_dissimilarities_allyears[domain == "Middle", b_divers_theilsen_pred := predict(bray_curtis_total_theilsen_middle_mod)]
 
 
 ###Visualize change over time (THEILSEN)
 ggplot(EBS.distances_dissimilarities_allyears) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = domain)) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   theme_classic()
 
-year_beta_bray_curtis_balanced_theilsenreg_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = domain)) +
-  labs(color = "Domain", x = "Year", y = "β diversity (Bray Curtis balanced)") +
+year_beta_bray_curtis_total_theilsenreg_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = domain)) +
+  labs(color = "Domain", x = "Year", y = "β diversity (Bray Curtis total)") +
   geom_line(aes(x = year, y = b_divers_theilsen_pred), color = "red") +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   facet_wrap(~domain) +
   theme_classic() +
   theme(legend.position = "null")
 
-saveRDS(year_beta_bray_curtis_balanced_theilsenreg_bydomain, file.path("Figures","Supplement","Theil_Sen","year_beta_bray_curtis_balanced_theilsenreg_bydomain.Rds"))
+saveRDS(year_beta_bray_curtis_total_theilsenreg_bydomain, file.path("Figures","Supplement","Theil_Sen","year_beta_bray_curtis_total_theilsenreg_bydomain.Rds"))
 
 #slopes
-slope_bray_curtis_balanced_theilsen_full <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-slope_bray_curtis_balanced_theilsen_inner <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-slope_bray_curtis_balanced_theilsen_middle <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-slope_bray_curtis_balanced_theilsen_outer <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+slope_bray_curtis_total_theilsen_full <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_bray_curtis_total_theilsen_inner <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_bray_curtis_total_theilsen_middle <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_bray_curtis_total_theilsen_outer <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
 
-slope_bray_curtis_balanced_theilsen_full
-slope_bray_curtis_balanced_theilsen_inner
-slope_bray_curtis_balanced_theilsen_middle
-slope_bray_curtis_balanced_theilsen_outer
+slope_bray_curtis_total_theilsen_full
+slope_bray_curtis_total_theilsen_inner
+slope_bray_curtis_total_theilsen_middle
+slope_bray_curtis_total_theilsen_outer
 
 #R^2 values summary(model)
-R2_bray_curtis_balanced_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_bray_curtis_balanced_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_bray_curtis_balanced_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_bray_curtis_balanced_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_bray_curtis_total_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_bray_curtis_total_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_bray_curtis_total_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_bray_curtis_total_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
-R2_bray_curtis_balanced_theilsen_full
-R2_bray_curtis_balanced_theilsen_inner
-R2_bray_curtis_balanced_theilsen_middle
-R2_bray_curtis_balanced_theilsen_outer
+R2_bray_curtis_total_theilsen_full
+R2_bray_curtis_total_theilsen_inner
+R2_bray_curtis_total_theilsen_middle
+R2_bray_curtis_total_theilsen_outer
 
 #p_values summary(model)
-p_value_bray_curtis_balanced_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_bray_curtis_balanced_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_bray_curtis_balanced_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_bray_curtis_balanced_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_bray_curtis_total_theilsen_full <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_bray_curtis_total_theilsen_inner <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_bray_curtis_total_theilsen_middle <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_bray_curtis_total_theilsen_outer <- round(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
-p_value_bray_curtis_balanced_theilsen_full
-p_value_bray_curtis_balanced_theilsen_inner
-p_value_bray_curtis_balanced_theilsen_middle
-p_value_bray_curtis_balanced_theilsen_outer
+p_value_bray_curtis_total_theilsen_full
+p_value_bray_curtis_total_theilsen_inner
+p_value_bray_curtis_total_theilsen_middle
+p_value_bray_curtis_total_theilsen_outer
 
 
 #place model values on plot
-year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
-  draw_plot(year_beta_bray_curtis_balanced_theilsenreg_bydomain, x = 0, y = 0, width = 10, height = 8) +
-  geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_middle, "  R^2 = ",R2_bray_curtis_balanced_theilsen_middle, "  p = ",p_value_bray_curtis_balanced_theilsen_middle))) +
-  geom_text(aes(x = 6.8, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_outer, "  R^2 = ",R2_bray_curtis_balanced_theilsen_outer, "  p = ",p_value_bray_curtis_balanced_theilsen_outer))) +
-  geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_full, "  R^2 = ",R2_bray_curtis_balanced_theilsen_full, "  p = ",p_value_bray_curtis_balanced_theilsen_full))) +
-  geom_text(aes(x = 6.9, y = 7.4, label = paste0("Slope = ",slope_bray_curtis_balanced_theilsen_inner, "  R^2 = ",R2_bray_curtis_balanced_theilsen_inner, "  p = ",p_value_bray_curtis_balanced_theilsen_inner)))
+year_beta_bray_curtis_total_theilsenreg_bydomain_annotate <- ggdraw(xlim = c(0,10), ylim = c(0,8)) +
+  draw_plot(year_beta_bray_curtis_total_theilsenreg_bydomain, x = 0, y = 0, width = 10, height = 8) +
+  geom_text(aes(x = 2.5, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_total_theilsen_middle, "  R^2 = ",R2_bray_curtis_total_theilsen_middle, "  p = ",p_value_bray_curtis_total_theilsen_middle))) +
+  geom_text(aes(x = 6.8, y = 0.8, label = paste0("Slope = ",slope_bray_curtis_total_theilsen_outer, "  R^2 = ",R2_bray_curtis_total_theilsen_outer, "  p = ",p_value_bray_curtis_total_theilsen_outer))) +
+  geom_text(aes(x = 2.5, y = 4.5, label = paste0("Slope = ",slope_bray_curtis_total_theilsen_full, "  R^2 = ",R2_bray_curtis_total_theilsen_full, "  p = ",p_value_bray_curtis_total_theilsen_full))) +
+  geom_text(aes(x = 6.9, y = 7.4, label = paste0("Slope = ",slope_bray_curtis_total_theilsen_inner, "  R^2 = ",R2_bray_curtis_total_theilsen_inner, "  p = ",p_value_bray_curtis_total_theilsen_inner)))
 
-ggsave(year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate,
+ggsave(year_beta_bray_curtis_total_theilsenreg_bydomain_annotate,
        path = file.path("Figures","Supplement","Theil_Sen"),
-       filename = "year_beta_bray_curtis_balanced_theilsenreg_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
+       filename = "year_beta_bray_curtis_total_theilsenreg_bydomain_annotate.jpg", height = 6, width = 8, unit = "in")
 
 
 
@@ -578,15 +584,15 @@ ggsave(year_beta_bray_curtis_biomassgradient_bydomain_annotate, path = file.path
 
 ###Visualize change over time (Jaccard)
 ggplot(EBS.distances_dissimilarities_allyears) +
-  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean, color = domain)) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_total_mean, color = domain)) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   theme_classic()
 
 year_beta_jaccard_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
-  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean, color = domain)) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_total_mean, color = domain)) +
   labs(color = "Domain", x = "Year", y = "β diversity (Jaccard)") +
-  geom_smooth(aes(x = year, y = jaccard_dissimilarity_turnover_mean), method = "lm", se = F, color = "red") +
+  geom_smooth(aes(x = year, y = jaccard_dissimilarity_total_mean), method = "lm", se = F, color = "red") +
   scale_color_manual(values = c("black", "#AA4499","#44AA99","#999933"), labels = c("Full EBS","Inner\n(to 50m)","Middle\n(to 100m)","Outer")) +
   facet_wrap(~domain) +
   theme_classic() +
@@ -595,10 +601,10 @@ year_beta_jaccard_bydomain <- ggplot(EBS.distances_dissimilarities_allyears) +
 saveRDS(year_beta_jaccard_bydomain, file.path("Figures","Supplement","Jaccard","year_beta_jaccard_bydomain.Rds"))
 
 #slopes
-slope_jaccard_full <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-slope_jaccard_inner <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-slope_jaccard_middle <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-slope_jaccard_outer <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+slope_jaccard_full <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_jaccard_inner <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_jaccard_middle <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_jaccard_outer <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
 
 slope_jaccard_full
 slope_jaccard_inner
@@ -606,10 +612,10 @@ slope_jaccard_middle
 slope_jaccard_outer
 
 #R^2 values summary(model)
-R2_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_jaccard_full <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
 R2_jaccard_full
 R2_jaccard_inner
@@ -617,10 +623,10 @@ R2_jaccard_middle
 R2_jaccard_outer
 
 #p_values summary(model)
-p_value_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_jaccard_full <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
 p_value_jaccard_full
 p_value_jaccard_inner

@@ -14,6 +14,7 @@ library(data.table)
 library(ggplot2)
 library(cowplot)
 library(RobustLinearReg)
+library(mgcv)
 
 #######################
 ##DATA##
@@ -23,18 +24,20 @@ library(RobustLinearReg)
 
 #trends
 year_beta_bydomain <- readRDS(
-  file.path("Figures","year_beta_bydomain.Rds")) #bray curtis balanced
-year_beta_bray_curtis_balanced_theilsenreg_bydomain <- readRDS(
-  file.path("Figures","Supplement","Theil_Sen","year_beta_bray_curtis_balanced_theilsenreg_bydomain.Rds")) #theil sen regression
-year_beta_bray_curtis_biomassgradient_bydomain <- readRDS(
-  file.path("Figures","Supplement","Biomass_gradient","year_beta_bray_curtis_biomassgradient_bydomain.Rds")) #BC biomass gradient
-year_beta_jaccard_bydomain <- readRDS(file.path("Figures","Supplement","Jaccard","year_beta_jaccard_bydomain.Rds")) #jaccard turnover
+  file.path("Figures","year_beta_bydomain.Rds")) #bray curtis total
+year_beta_bray_curtis_total_theilsenreg_bydomain <- readRDS(
+  file.path("Figures","Supplement","Theil_Sen","year_beta_bray_curtis_total_theilsenreg_bydomain.Rds")) #theil sen regression
+#year_beta_bray_curtis_balanced_bydomain <- readRDS(
+ # file.path("Figures","Supplement","Biomass_gradient","year_beta_bray_curtis_balanced_bydomain.Rds")) #BC biomass gradient
+#year_beta_bray_curtis_biomassgradient_bydomain <- readRDS(
+ # file.path("Figures","Supplement","Biomass_gradient","year_beta_bray_curtis_biomassgradient_bydomain.Rds")) #BC biomass gradient
+year_beta_jaccard_bydomain <- readRDS(file.path("Figures","Supplement","Jaccard","year_beta_jaccard_bydomain.Rds")) #jaccard total
 
 Alaska_domains <- readRDS(file.path("Figures","Alaska_domains.Rds")) #map
 
 #pull in broken stick plots
 
-  #balanced BC
+  #total BC
   broken_stick_plot_w3_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w3_full_lm_fig1.Rds"))
   broken_stick_plot_w10_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w10_full_lm_fig1.Rds"))
   broken_stick_plot_w20_full_lm_fig1 <- readRDS(file.path("Figures","broken_stick_plot_w20_full_lm_fig1.Rds"))
@@ -52,11 +55,11 @@ Alaska_domains <- readRDS(file.path("Figures","Alaska_domains.Rds")) #map
   broken_stick_plot_w20_full_biomass_gradient_fig1 <- readRDS(file.path("Figures", "Supplement", "Biomass_gradient","broken_stick_plot_w20_full_biomass_gradient_fig1.Rds"))
   broken_stick_plot_w35_full_biomass_gradient_fig1 <- readRDS(file.path("Figures", "Supplement", "Biomass_gradient","broken_stick_plot_w35_full_biomass_gradient_fig1.Rds"))
   
-  #jaccard turnover
-  broken_stick_plot_w3_full_jaccard_turnover_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w3_full_jaccard_turnover_fig1.Rds"))
-  broken_stick_plot_w10_full_jaccard_turnover_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w10_full_jaccard_turnover_fig1.Rds"))
-  broken_stick_plot_w20_full_jaccard_turnover_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w20_full_jaccard_turnover_fig1.Rds"))
-  broken_stick_plot_w35_full_jaccard_turnover_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w35_full_jaccard_turnover_fig1.Rds"))
+  #jaccard total
+  broken_stick_plot_w3_full_jaccard_total_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w3_full_jaccard_total_fig1.Rds"))
+  broken_stick_plot_w10_full_jaccard_total_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w10_full_jaccard_total_fig1.Rds"))
+  broken_stick_plot_w20_full_jaccard_total_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w20_full_jaccard_total_fig1.Rds"))
+  broken_stick_plot_w35_full_jaccard_total_fig1 <- readRDS(file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w35_full_jaccard_total_fig1.Rds"))
   
 
 #Pull in distances dissimilarities csv to calculate slopes of year~dissimilarity
@@ -70,86 +73,100 @@ EBS.distances_dissimilarities_allyears_nopollock <-  fread(file.path("Output","E
 
 #and then calculate slopes etc.
 #slopes
-slope_full <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],2)
-slope_inner <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],2)
-slope_middle <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],2)
-slope_outer <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],2)
+slope_full <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],2)
+slope_inner <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],2)
+slope_middle <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],2)
+slope_outer <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],2)
 
-slope_se_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+slope_se_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year,
                                    data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
-slope_se_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
-slope_se_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
-slope_se_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
+slope_se_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
+slope_se_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
+slope_se_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
 
 #R^2 values summary(model)
-R2_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
 #p_values summary(model)
-p_value_full <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_full <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_inner <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_middle <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_outer <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
 #predicted values to show gams
-bray_curtis_balanced_gam_full_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
-bray_curtis_balanced_gam_inner_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
-bray_curtis_balanced_gam_middle_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
-bray_curtis_balanced_gam_outer_mod <- gam(bray_curtis_dissimilarity_balanced_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+bray_curtis_total_gam_full_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+bray_curtis_total_gam_inner_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+bray_curtis_total_gam_middle_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+bray_curtis_total_gam_outer_mod <- gam(bray_curtis_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
 
-EBS.distances_dissimilarities_allyears[Domain == "Full",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_full_mod)]
-EBS.distances_dissimilarities_allyears[Domain == "Inner",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_inner_mod)]
-EBS.distances_dissimilarities_allyears[Domain == "Middle",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_middle_mod)]
-EBS.distances_dissimilarities_allyears[Domain == "Outer",pred_BC_balanced_gam_val := predict(bray_curtis_balanced_gam_outer_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Full",pred_BC_total_gam_val := predict(bray_curtis_total_gam_full_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Inner",pred_BC_total_gam_val := predict(bray_curtis_total_gam_inner_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Middle",pred_BC_total_gam_val := predict(bray_curtis_total_gam_middle_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Outer",pred_BC_total_gam_val := predict(bray_curtis_total_gam_outer_mod)]
 
 
 
 #THEIL SEN
 #slopes
-slope_full_theil <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],2)
+slope_full_theil <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],2)
 
-slope_se_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+slope_se_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                    data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
 #R^2 values summary(model)
-R2_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
 
 #p_values summary(model)
-p_value_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_full_theil <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
 
 
 #JACCARD (same)
 
 #slopes
-slope_jaccard_full <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-slope_jaccard_inner <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-slope_jaccard_middle <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-slope_jaccard_outer <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+slope_jaccard_full <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+slope_jaccard_inner <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+slope_jaccard_middle <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+slope_jaccard_outer <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
 
 #SE of slope
-slope_se_jaccard_full <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year,
+slope_se_jaccard_full <- signif(summary(lm(jaccard_dissimilarity_total_mean~year,
                                    data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,2],2)
-slope_se_jaccard_inner <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
-slope_se_jaccard_middle <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
-slope_se_jaccard_outer <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
+slope_se_jaccard_inner <- signif(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,2],2)
+slope_se_jaccard_middle <- signif(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,2],2)
+slope_se_jaccard_outer <- signif(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,2],2)
+
 
 
 
 #R^2 values summary(model)
-R2_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
-R2_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
-R2_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
-R2_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
+R2_jaccard_full <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$adj.r.squared,2)
+R2_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$adj.r.squared,2)
+R2_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$adj.r.squared,2)
+R2_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$adj.r.squared,2)
 
 
 #p_values summary(model)
-p_value_jaccard_full <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
-p_value_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
-p_value_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
-p_value_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
+p_value_jaccard_full <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))$coefficients[2,4],2)
+p_value_jaccard_inner <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))$coefficients[2,4],2)
+p_value_jaccard_middle <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))$coefficients[2,4],2)
+p_value_jaccard_outer <- round(summary(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))$coefficients[2,4],2)
 
-####Biomass gradient
+
+#predicted values to show gams
+jaccard_total_gam_full_mod <- gam(jaccard_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Full",])
+jaccard_total_gam_inner_mod <- gam(jaccard_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Inner",])
+jaccard_total_gam_middle_mod <- gam(jaccard_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Middle",])
+jaccard_total_gam_outer_mod <- gam(jaccard_dissimilarity_total_mean~s(year, bs = "cr"), data = EBS.distances_dissimilarities_allyears[domain == "Outer",])
+
+EBS.distances_dissimilarities_allyears[Domain == "Full",pred_jaccard_total_gam_val := predict(jaccard_total_gam_full_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Inner",pred_jaccard_total_gam_val := predict(jaccard_total_gam_inner_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Middle",pred_jaccard_total_gam_val := predict(jaccard_total_gam_middle_mod)]
+EBS.distances_dissimilarities_allyears[Domain == "Outer",pred_jaccard_total_gam_val := predict(jaccard_total_gam_outer_mod)]
+
+
+####Biomass gradient (SKIP FOR NOW)
 #slopes
 slope_bray_curtis_full_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
 slope_bray_curtis_inner_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
@@ -182,33 +199,33 @@ p_value_bray_curtis_outer_biomassgradient <- round(summary(lm(bray_curtis_dissim
 
 #NO POLLOCK (same)
 #slopes
-slope_full_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))[[2]],5)
-slope_inner_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))[[2]],5)
-slope_middle_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))[[2]],5)
-slope_outer_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))[[2]],5)
+slope_full_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))[[2]],5)
+slope_inner_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))[[2]],5)
+slope_middle_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))[[2]],5)
+slope_outer_nopollock <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))[[2]],5)
 
 #R^2 values summary(model)
-R2_full_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))$adj.r.squared,2)
-R2_inner_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))$adj.r.squared,2)
-R2_middle_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))$adj.r.squared,2)
-R2_outer_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))$adj.r.squared,2)
+R2_full_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))$adj.r.squared,2)
+R2_inner_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))$adj.r.squared,2)
+R2_middle_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))$adj.r.squared,2)
+R2_outer_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))$adj.r.squared,2)
 
 #p_values summary(model)
-p_value_full_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))$coefficients[2,4],2)
-p_value_inner_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))$coefficients[2,4],2)
-p_value_middle_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))$coefficients[2,4],2)
-p_value_outer_nopollock <- round(summary(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))$coefficients[2,4],2)
+p_value_full_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Full",]))$coefficients[2,4],2)
+p_value_inner_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Inner",]))$coefficients[2,4],2)
+p_value_middle_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Middle",]))$coefficients[2,4],2)
+p_value_outer_nopollock <- round(summary(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears_nopollock[domain == "Outer",]))$coefficients[2,4],2)
 
 #######################
 ##PLOT
 #######################
-#Bray Curtis balaned with Pollock
+#Bray Curtis total with Pollock
 #outer, middle, inner
 BC_dissim_O_M_I <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full",]) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = Domain), size = 1) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = Domain), size = 1) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
-  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black", method = "lm", se = F, linetype = "longdash", linewidth = 0.6) +
-  geom_line(aes(x = year, y = pred_BC_balanced_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
+  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black", method = "lm", se = F, linetype = "longdash", linewidth = 0.6) +
+  geom_line(aes(x = year, y = pred_BC_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   scale_color_manual(values = c("#999933", "#44AA99","#AA4499")) +
   facet_wrap(~Domain) +
   theme_classic() +
@@ -216,11 +233,11 @@ BC_dissim_O_M_I <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full
 
 #full
 BC_dissim_F <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",]) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean)) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean)) +
   labs(x = "Year", y = "β diversity") +
-  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
+  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black",
               method = "lm", se = F, linetype = "longdash") +
-  geom_line(aes(x = year, y = pred_BC_balanced_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
+  geom_line(aes(x = year, y = pred_BC_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   theme_classic() +
   theme(legend.position = "null")
 
@@ -232,8 +249,8 @@ map_year_beta_bydomain_annotate <- ggdraw(xlim = c(0,30), ylim = c(0,20)) +
   geom_segment(aes(x = 15, xend = 16.2, y = 18, yend = 18), linetype = "longdash", linewidth = 0.8) +
   geom_text(aes(x = 13, y = 18, label = paste0("Linear model\nslope = ",
      slope_full,"+/-",slope_se_full,"\np = ",p_value_full,"\nR-squared = ",R2_full)), size = 3) +
-  geom_text(aes(x = 13, y = 3, label = paste0("GAM\nedf = 7.74",
-                                               "\np = 1.04e-6","\nadj. R-squared = 0.73")), size = 3) +
+  geom_text(aes(x = 13, y = 3, label = paste0("GAM\nedf = 7.70",
+                                               "\np = 1.23e-6","\ndeviance explained = 78.3%")), size = 3) +
   geom_segment(aes(x = 15, xend = 16.2, y = 3, yend = 3), linetype = "dashed", linewidth = 0.8, color = "darkgrey") +
   draw_plot(broken_stick_plot_w3_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w10_full_lm_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
@@ -258,10 +275,10 @@ ggsave(map_year_beta_bydomain_annotate, path = file.path("Figures"), filename = 
 ##SUPPLEMENT
 #################
 
-full_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full",])
-inner_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Inner",])
-middle_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Middle",])
-outer_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Outer",])
+full_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full",])
+inner_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Inner",])
+middle_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Middle",])
+outer_theilsen_mod <- theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Outer",])
 
 
 
@@ -273,9 +290,10 @@ EBS.distances_dissimilarities_allyears[Domain == "Outer",pred_dissim := predict(
 #THEILSEN
 #outer, middle, inner
 BC_dissim_O_M_I_theilsen <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full",]) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean, color = Domain), size = 1) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean, color = Domain), size = 1) +
   labs(color = "Domain", x = "Year", y = "β diversity") +
   geom_line(aes(x = year, y = pred_dissim), color = "black", linetype = "longdash", linewidth = 0.6) +
+  geom_line(aes(x = year, y = pred_BC_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   scale_color_manual(values = c("#999933", "#44AA99","#AA4499")) +
   facet_wrap(~Domain) +
   theme_classic() +
@@ -283,11 +301,12 @@ BC_dissim_O_M_I_theilsen <- ggplot(EBS.distances_dissimilarities_allyears[Domain
 
 #full
 BC_dissim_F_theilsen <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",]) +
-  geom_point(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean)) +
+  geom_point(aes(x = year, y = bray_curtis_dissimilarity_total_mean)) +
   labs(x = "Year", y = "β diversity") +
   geom_line(aes(x = year, y = pred_dissim), color = "black", linetype = "longdash", linewidth = 1) +
-  #  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "darkgrey",
+  #  geom_smooth(aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "darkgrey",
   #     method = "gam", se = F, linetype = "dotted") +
+  geom_line(aes(x = year, y = pred_BC_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   theme_classic() +
   theme(legend.position = "null")
 
@@ -296,12 +315,17 @@ map_year_beta_bydomain_annotate_theilsen <- ggdraw(xlim = c(0,30), ylim = c(0,20
   draw_plot(BC_dissim_O_M_I_theilsen + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 8) +
   draw_plot(Alaska_domains, x = 0, y =6.5, width = 10, height = 15) +
   draw_plot(BC_dissim_F_theilsen + theme(axis.title.x = element_blank()), x = 10, y = 0, width = 13, height = 20) +
-  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_full_theil,"+/-",slope_se_full_theil,"\np = ",p_value_full_theil)), size = 3) +
+  geom_text(aes(x = 13, y = 18, label = paste0(
+    "slope = ",slope_full_theil,"+/-",slope_se_full_theil,"\np = ",p_value_full_theil)), size = 3) +
+  geom_text(aes(x = 13, y = 3, label = paste0("GAM\nedf = 7.70",
+                                              "\np = 1.23e-6","\ndeviance explained = 78.3%")), size = 3) +
   draw_plot(broken_stick_plot_w3_full_theilsen_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w10_full_theilsen_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w20_full_theilsen_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w35_full_theilsen_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
-  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
+  geom_segment(aes(x = 15, xend = 16.2, y = 18, yend = 18), linetype = "longdash", linewidth = 0.8) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 3, yend = 3), linetype = "dashed", linewidth = 0.8, color = "darkgrey") +
+   geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
   geom_text(aes(x = 1.3, y = 7.3, label = "b."), size = 4, fontface = "bold") +
   geom_text(aes(x = 4.3, y =7.3, label = "c."), size = 4, fontface = "bold") +
   geom_text(aes(x = 7.3, y =7.3, label = "d."), size = 4, fontface = "bold") +
@@ -316,7 +340,7 @@ map_year_beta_bydomain_annotate_theilsen
 
 ggsave(map_year_beta_bydomain_annotate_theilsen, path = file.path("Figures","Supplement","Theil_Sen"), filename = "map_year_beta_bydomain_annotate_theilsen.jpg", height =5, width = 13.5)
 
-#biomassgradient component of BC dissimilarity
+#biomassgradient component of BC dissimilarity (SKIP FOR NOW)
 
 #outer, middle, inner
 BC_dissim_O_M_I_biomassgradient <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full",]) +
@@ -347,7 +371,9 @@ map_year_beta_bydomain_annotate_bray_curtis_biomassgradient <- ggdraw(xlim = c(0
   draw_plot(broken_stick_plot_w10_full_biomass_gradient_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w20_full_biomass_gradient_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
   draw_plot(broken_stick_plot_w35_full_biomass_gradient_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
-  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
+  geom_segment(aes(x = 15, xend = 16.2, y = 18, yend = 18), linetype = "longdash", linewidth = 0.8) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 3, yend = 3), linetype = "dashed", linewidth = 0.8, color = "darkgrey") +
+   geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
   geom_text(aes(x = 1.5, y = 7.3, label = "b."), size = 4, fontface = "bold") +
   geom_text(aes(x = 4.5, y =7.3, label = "c."), size = 4, fontface = "bold") +
   geom_text(aes(x = 7.5, y =7.3, label = "d."), size = 4, fontface = "bold") +
@@ -366,34 +392,41 @@ ggsave(map_year_beta_bydomain_annotate_bray_curtis_biomassgradient, path = file.
 #JACCARD
 #outer, middle, inner
 BC_dissim_O_M_I_jaccard <- ggplot(EBS.distances_dissimilarities_allyears[Domain != "Full",]) +
-  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean, color = Domain), size = 1) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_total_mean, color = Domain), size = 1) +
   labs(color = "Domain", x = "Year", y = "β diversity (Jaccard)") +
-  geom_smooth(aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black", method = "lm", se = F, linetype = "longdash", linewidth = 0.6) +
+  geom_smooth(aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black", method = "lm", se = F, linetype = "longdash", linewidth = 0.6) +
   scale_color_manual(values = c("#999933", "#44AA99","#AA4499")) +
+  geom_line(aes(x = year, y = pred_jaccard_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   facet_wrap(~Domain) +
   theme_classic() +
   theme(legend.position = "null", strip.text = element_blank())
 
 #full
 BC_dissim_F_jaccard <- ggplot(EBS.distances_dissimilarities_allyears[Domain == "Full",]) +
-  geom_point(aes(x = year, y = jaccard_dissimilarity_turnover_mean)) +
+  geom_point(aes(x = year, y = jaccard_dissimilarity_total_mean)) +
   labs(x = "Year", y = "β diversity (Jaccard)") +
-  geom_smooth(aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black",
+  geom_smooth(aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black",
               method = "lm", se = F, linetype = "longdash") +
+  geom_line(aes(x = year, y = pred_jaccard_total_gam_val), color = "darkgrey", linetype = "dashed") + #add gam
   theme_classic() +
   theme(legend.position = "null")
 
 #place model values on plot
 map_year_beta_bydomain_annotate_jaccard <- ggdraw(xlim = c(0,30), ylim = c(0,20)) +
-  draw_plot(BC_dissim_O_M_I_jaccard + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 8) +
+  draw_plot(BC_dissim_O_M_I_jaccard + theme(axis.title.x = element_blank()), x = 0, y = 0, width = 10, height = 7) +
   draw_plot(Alaska_domains, x = 0, y =6.5, width = 10, height = 15) +
   draw_plot(BC_dissim_F_jaccard + theme(axis.title.x = element_blank()), x = 10, y = 0, width = 13, height = 20) +
-  geom_text(aes(x = 13, y = 18, label = paste0("slope = ",slope_jaccard_full,"+/-",slope_se_jaccard_full,"\np = ",p_value_jaccard_full)), size = 3) +
-  draw_plot(broken_stick_plot_w3_full_jaccard_turnover_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
-  draw_plot(broken_stick_plot_w10_full_jaccard_turnover_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
-  draw_plot(broken_stick_plot_w20_full_jaccard_turnover_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
-  draw_plot(broken_stick_plot_w35_full_jaccard_turnover_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
-  geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
+  geom_text(aes(x = 13, y = 18, label = paste0(
+    "slope = ",slope_jaccard_full,"+/-",slope_se_jaccard_full,"\np = ",p_value_jaccard_full)), size = 3) +
+  geom_text(aes(x = 13, y = 3, label = paste0("GAM\nedf = 7.13",
+                                              "\np = 0.0002","\ndeviance explained = 64.6%")), size = 3) +
+  draw_plot(broken_stick_plot_w3_full_jaccard_total_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 15,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w10_full_jaccard_total_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 10,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w20_full_jaccard_total_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 5,  width = 7,  height = 5) +
+  draw_plot(broken_stick_plot_w35_full_jaccard_total_fig1 + theme(plot.title = element_text(size = 8), axis.title = element_blank()), x = 23, y = 0,  width = 7,  height = 5) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 18, yend = 18), linetype = "longdash", linewidth = 0.8) +
+  geom_segment(aes(x = 15, xend = 16.2, y = 3, yend = 3), linetype = "dashed", linewidth = 0.8, color = "darkgrey") +
+   geom_text(aes(x = 0.5, y = 19.7, label = "a."), size = 4, fontface = "bold") +
   geom_text(aes(x = 1.3, y = 7.3, label = "b."), size = 4, fontface = "bold") +
   geom_text(aes(x = 4.3, y =7.3, label = "c."), size = 4, fontface = "bold") +
   geom_text(aes(x = 7.3, y =7.3, label = "d."), size = 4, fontface = "bold") +

@@ -35,7 +35,7 @@ EBS.distances_dissimilarities_allyears[,Domain := factor(domain, levels = c("Ful
 #num_years = 3 (for 1000 combos of 3 years)
 #resample count = # of times to run sort(sample())
 
-breakup_randomcombos <-function(data, num_years, sampling_period, resample_count = 1000, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_balanced_mean"){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
+breakup_randomcombos <-function(data, num_years, sampling_period, resample_count = 1000, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_total_mean"){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
   remaining<-data #create dummy data set to operate on
  # output<-data.table(year=integer(0), #create empty data frame to put our output variables in
  #                    length=integer(0), 
@@ -122,15 +122,15 @@ for (i in c(2,3,5,10,15,20,25,30)){ #number of years of data
 #save output as csv
 fwrite(subsampling_output_full, file.path("Output","subsampling_output_full.csv"))
 
-subsampling_output_full<-fread(file.path("Output","subsampling_output_full.csv"))
+#subsampling_output_full<-fread(file.path("Output","subsampling_output_full.csv"))
 #plot
 
 #slope of full dataset
-Full_slope <- coef(lm(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
-Full_confint_lower <- confint(lm(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
-Full_confint_upper <- confint(lm(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
-Full_rsquared <- summary(lm(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
-Full_pvalue <- summary(lm(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
+Full_slope <- coef(lm(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
+Full_confint_lower <- confint(lm(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
+Full_confint_upper <- confint(lm(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
+Full_rsquared <- summary(lm(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
+Full_pvalue <- summary(lm(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
 
 subsampling_output_full[,study_duration_label := factor(study_duration,
                   labels = c("Study duration: 5 years",  "Study duration: 10 years", "Study duration: 15 years", "Study duration: 20 years", "Study duration: 25 years", "Study duration: 30 years", "Study duration: 35 years"))]
@@ -212,10 +212,11 @@ heatmap_year_obs_slope <- ggplot(subsampling_output_full.u, aes(y = factor(N_dat
   geom_tile() +
   #geom_text(aes(label= signif(mean_slope,2)),  size =3) +
   scale_fill_gradientn(
-    breaks = c(-0.0018,-0.001,Full_slope,0,max(subsampling_output_full.u$mean_slope)),
-                       colours = c("#65469c","#3478A2","#72D4AC","white","#F9DFCC","#F6B38F","#DE2D43","#7F1F5A"),
-                       labels =c("-0.002", "",paste0("-0.00067\nlong\nterm\nslope"), "0","0.0008"),
-                       guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
+    breaks = c(-0.0018,Full_slope,max(subsampling_output_full.u$mean_slope)),
+                       colours = c("#65469c","#3478A2","#72D4AC","white","#F9DFCC","#F6B38F","#DE2D43"),
+                       labels =c("-0.002",paste0("-0.00076\nlong\nterm\nslope"),"0.0008"),
+                       guide = guide_colorbar(frame.colour = "black", 
+                                              #ticks.colour = NA,
                                               title.position = "top",
                                               title.hjust = 0.5)) +
   labs(x = "Study duration", y = "Number of years of data", fill = "Mean slope") +
@@ -233,14 +234,16 @@ heatmap_year_obs_slope_SD <- ggplot(subsampling_output_full.u, aes(y = factor(N_
   geom_tile() +
   #geom_text(aes(label= signif(slope_SD,2)),  size =3) +
   scale_fill_gradientn(colors = c("#FEFFD5","yellow","orange","darkred","#660000"),
-                       guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
+                       guide = guide_colorbar(frame.colour = "black", 
+                                              ticks.colour = NA,
                                             title.position = "top",
                                             title.hjust = 0.5)) +
   labs(x = "Study duration", y = "Number of years of data", fill = "SD of slopes") +
   theme_classic() +
   theme(legend.position = c(0.2,0.88),
         legend.direction = "horizontal",
-        legend.key.size = unit(1,"cm"))
+        legend.key.size = unit(1,"cm"),
+        legend.text = element_text(angle = 90, hjust = 1))
 
 ggsave(heatmap_year_obs_slope_SD, path = file.path("Figures"),
        filename = "heatmap_year_obs_slope_SD.jpg", height = 7, width = 9, unit = "in")
@@ -249,40 +252,40 @@ ggsave(heatmap_year_obs_slope_SD, path = file.path("Figures"),
 #subsample visuals
 ###############
 
-f3_d5_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f3_d5_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year,
            EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))[2],2)
 
-f3_d5_p_value <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f3_d5_p_value <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year,
                                EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))$coefficients[2,4],2)
 
 subsample_viz_f3_d5 <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),], 
-              aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
+              aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black",
               method = "lm", se = F, linetype = "longdash") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
  # geom_text(aes(x = 1989, y = 0.43, label = paste0("3 obs over 5 years    ","Slope = ",f3_d5_slope,"\np-value = ",f3_d5_p_value)), size= 3) +
   ggtitle(paste0("3 obs over 5 years      ","slope = ",f3_d5_slope,"      p-value = ",f3_d5_p_value)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f10_d20_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f10_d20_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year,
                                       EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))[2],2)
 
-f10_d20_p_value <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f10_d20_p_value <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year,
                                    EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))$coefficients[2,4],2)
 
 subsample_viz_f10_d20 <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),], 
-              aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
+              aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black",
               method = "lm", se = F, linetype ="dashed") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
 #  geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f10_d20_slope,"\np-value = ",f10_d20_p_value)), size= 3) +
   ggtitle(paste0("10 obs over 20 years      ","slope = ",f10_d20_slope,"      p-value = ",f10_d20_p_value)) +
@@ -291,40 +294,40 @@ subsample_viz_f10_d20 <-  ggplot() +
 
 
 
-f30_d30_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f30_d30_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year,
                                         EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))[2],2)
 
-f30_d30_p_value <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f30_d30_p_value <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year,
                                      EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))$coefficients[2,4],2)
 
 
 subsample_viz_f30_d30 <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),], 
-              aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
+              aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black",
               method = "lm", se = F) +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("30 obs over 30 years      ","slope = ",f30_d30_slope,"      p-value = ",f30_d30_p_value)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f2_d30_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f2_d30_slope <- signif(coefficients(lm(bray_curtis_dissimilarity_total_mean~year,
                                         EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))[2],2)
 
-f2_d30_p_value <- signif(summary(lm(bray_curtis_dissimilarity_balanced_mean~year,
+f2_d30_p_value <- signif(summary(lm(bray_curtis_dissimilarity_total_mean~year,
                                      EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))$coefficients[2,4],2)
 
 subsample_viz_f2_d30 <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),], 
-              aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), color = "black",
+              aes(x = year, y = bray_curtis_dissimilarity_total_mean), color = "black",
               method = "lm", se = F, linetype = "dashed") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   #geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f2_d30_slope,"\np-value = NA")), size= 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("2 obs over 30 years      ","slope = ",f2_d30_slope,"      p-value = NA")) +
@@ -425,15 +428,16 @@ for (i in c(2,3,5,10,15,20,25,30)){ #number of years of data
 
 #save output as csv
 fwrite(subsampling_output_full_theilsen, file.path("Output","Supplement","Theil_Sen","subsampling_output_full_theilsen.csv"))
+subsampling_output_full_theilsen <- fread(file.path("Output","Supplement","Theil_Sen","subsampling_output_full_theilsen.csv"))
 
 #plot
 
 #slope of full dataset
-Full_slope_theilsen <- coef(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
-Full_confint_lower_theilsen <- confint(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
-Full_confint_upper_theilsen <- confint(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
-Full_rsquared_theilsen <- summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
-Full_pvalue_theilsen <- summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
+Full_slope_theilsen <- coef(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
+Full_confint_lower_theilsen <- confint(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
+Full_confint_upper_theilsen <- confint(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
+Full_rsquared_theilsen <- summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
+Full_pvalue_theilsen <- summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
 
 subsampling_output_full_theilsen[,study_duration_label := factor(study_duration,
                                                         labels = c("Study duration: 5 years",  "Study duration: 10 years", "Study duration: 15 years", "Study duration: 20 years", "Study duration: 25 years", "Study duration: 30 years", "Study duration: 35 years"))]
@@ -518,8 +522,8 @@ heatmap_year_obs_slope_theilsen <- ggplot(subsampling_output_full_theilsen.u, ae
   #geom_text(aes(label= signif(mean_slope,2)),  size =3) +
   scale_fill_gradientn(
     breaks = c(-0.0017,Full_slope_theilsen,max(subsampling_output_full_theilsen.u$mean_slope)),
-    colours = c("#65469c","#3478A2","#72D4AC","white","#f7e9df","#F9DFCC","#F6B38F","#DE2D43","#7F1F5A"),
-    labels =c("-0.002",paste0("-0.00057\nlong\nterm\nslope"),"0.0011"),
+    colours = c("#65469c","#3478A2","#72D4AC","white","#F6B38F","#DE2D43"),
+    labels =c("-0.002",paste0("-0.00034\nlong\nterm\nslope"),".0011"),
     guide = guide_colorbar(frame.colour = "black", ticks.colour = "black",
                            title.position = "top",
                            title.hjust = 0.5)) +
@@ -545,7 +549,8 @@ heatmap_year_obs_slope_SD_theilsen <- ggplot(subsampling_output_full_theilsen.u,
   theme_classic() +
   theme(legend.position = c(0.2,0.88),
         legend.direction = "horizontal",
-        legend.key.size = unit(1,"cm"))
+        legend.key.size = unit(1,"cm"),
+        legend.text=element_text(angle = 90, hjust = 1.2))
 
 ggsave(heatmap_year_obs_slope_SD_theilsen, path = file.path("Figures","Supplement","Theil_Sen"),
        filename = "heatmap_year_obs_slope_SD_theilsen.jpg", height = 7, width = 9, unit = "in")
@@ -556,44 +561,44 @@ ggsave(heatmap_year_obs_slope_SD_theilsen, path = file.path("Figures","Supplemen
 
 ######NEXT: fix these to show Theil Sen trends instead of basic lm
 
-f3_d5_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f3_d5_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                       EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))[2],2)
 
-f3_d5_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f3_d5_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                    EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))$coefficients[2,4],2)
 
 subset_f3_d5 <- EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]
-subset_f3_d5[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))]
+subset_f3_d5[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))]
 
 subsample_viz_f3_d5_theilsen <-  ggplot() +
   geom_line(data = subset_f3_d5, 
               aes(x = year, y = theilsen_estimate), color = "black",linetype = "longdash") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   # geom_text(aes(x = 1989, y = 0.43, label = paste0("3 obs over 5 years    ","Slope = ",f3_d5_slope,"\np-value = ",f3_d5_p_value)), size= 3) +
   ggtitle(paste0("3 obs over 5 years      ","slope = ",f3_d5_slope_theilsen,"      p-value = ",f3_d5_p_value_theilsen)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f10_d20_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f10_d20_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                         EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))[2],2)
 
-f10_d20_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f10_d20_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                      EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))$coefficients[2,4],2)
 
 subset_f10_d20 <- EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]
-subset_f10_d20[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))]
+subset_f10_d20[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))]
 
 subsample_viz_f10_d20_theilsen <-  ggplot() +
   geom_line(data = subset_f10_d20, 
               aes(x = year, y = theilsen_estimate), color = "black",linetype ="dashed") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   #  geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f10_d20_slope,"\np-value = ",f10_d20_p_value)), size= 3) +
   ggtitle(paste0("10 obs over 20 years      ","slope = ",f10_d20_slope_theilsen,"      p-value = ",f10_d20_p_value_theilsen)) +
@@ -602,46 +607,46 @@ subsample_viz_f10_d20_theilsen <-  ggplot() +
 
 
 
-f30_d30_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f30_d30_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                         EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))[2],2)
 
-f30_d30_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f30_d30_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                      EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))$coefficients[2,4],2)
 
 subset_f30_d30 <- EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]
-subset_f30_d30[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))]
+subset_f30_d30[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))]
 
 
 subsample_viz_f30_d30_theilsen <-  ggplot() +
   geom_line(data = subset_f30_d30, 
               aes(x = year, y = theilsen_estimate), color = "black") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("30 obs over 30 years      ","slope = ",f30_d30_slope_theilsen,"      p-value = ",f30_d30_p_value_theilsen)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f2_d30_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f2_d30_slope_theilsen <- signif(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                        EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))[2],2)
 
-f2_d30_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year,
+f2_d30_p_value_theilsen <- signif(summary(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year,
                                     EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))$coefficients[2,4],2)
 
 
 subset_f2_d30 <- EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]
-subset_f2_d30[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))]
+subset_f2_d30[,theilsen_estimate := predict(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))]
 
 
 subsample_viz_f2_d30_theilsen <-  ggplot() +
   geom_line(data = subset_f2_d30, 
               aes(x = year, y = theilsen_estimate), color = "black",linetype = "dashed") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = bray_curtis_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),],
-             aes(x = year, y = bray_curtis_dissimilarity_balanced_mean), size = 3) +
+             aes(x = year, y = bray_curtis_dissimilarity_total_mean), size = 3) +
   #geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f2_d30_slope,"\np-value = NA")), size= 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("2 obs over 30 years      ","slope = ",f2_d30_slope_theilsen,"      p-value = NA")) +
@@ -1030,7 +1035,7 @@ for (i in c(2,3,5,10,15,20,25,30)){ #number of years of data
     }else{
       final <- breakup_randomcombos(EBS.distances_dissimilarities_allyears[domain == "Full"],
                                     num_years = i, sampling_period = j, resample_count = 5000,
-                                    beta_term =  "jaccard_dissimilarity_turnover_mean")
+                                    beta_term =  "jaccard_dissimilarity_total_mean")
       
       subsampling_output_full_jaccard <- rbind(subsampling_output_full_jaccard, final)
       
@@ -1043,15 +1048,17 @@ for (i in c(2,3,5,10,15,20,25,30)){ #number of years of data
 
 #save output as csv
 fwrite(subsampling_output_full_jaccard, file.path("Output","Supplement","Jaccard","subsampling_output_full_jaccard.csv"))
+#subsampling_output_full_jaccard <- fread(file.path("Output","Supplement","Jaccard","subsampling_output_full_jaccard.csv"))
+
 
 #plot
 
 #slope of full dataset
-Full_slope_jaccard <- coef(lm(jaccard_dissimilarity_turnover_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
-Full_confint_lower_jaccard <- confint(lm(jaccard_dissimilarity_turnover_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
-Full_confint_upper_jaccard <- confint(lm(jaccard_dissimilarity_turnover_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
-Full_rsquared_jaccard <- summary(lm(jaccard_dissimilarity_turnover_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
-Full_pvalue_jaccard <- summary(lm(jaccard_dissimilarity_turnover_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
+Full_slope_jaccard <- coef(lm(jaccard_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))[[2]]
+Full_confint_lower_jaccard <- confint(lm(jaccard_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,1] #lower bound of CI for parameter
+Full_confint_upper_jaccard <- confint(lm(jaccard_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]), level = 0.95)[2,2] #lower bound of CI for parameter
+Full_rsquared_jaccard <- summary(lm(jaccard_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$r.squared
+Full_pvalue_jaccard <- summary(lm(jaccard_dissimilarity_total_mean~year,data = EBS.distances_dissimilarities_allyears[domain == "Full"]))$coefficients[2,4]
 
 subsampling_output_full_jaccard[,study_duration_label := factor(study_duration,
                                                                          labels = c("Study duration: 5 years",  "Study duration: 10 years", "Study duration: 15 years", "Study duration: 20 years", "Study duration: 25 years", "Study duration: 30 years", "Study duration: 35 years"))]
@@ -1136,7 +1143,7 @@ heatmap_year_obs_slope_jaccard <- ggplot(subsampling_output_full_jaccard.u, aes(
   scale_fill_gradientn(
     breaks = c(-0.001,Full_slope_jaccard,max(subsampling_output_full_jaccard.u$mean_slope)),
       colours = c("#65469c","#3478A2","#72D4AC","#c3fae3","#ebfcf5","white","#F9DFCC","#F6B38F","#DE2D43","#7F1F5A"),
-       labels =c("-0.001",paste0("-7.8e5\nlong\nterm\nslope"),"0.0012"),
+       labels =c("-0.001",paste0("-1.5e-4\nlong\nterm\nslope"),"0.0008"),
      guide = guide_colorbar(frame.colour = "black", ticks.colour = "black",
     title.position = "top",
     title.hjust = 0.5)) +
@@ -1155,7 +1162,7 @@ heatmap_year_obs_slope_SD_jaccard <- ggplot(subsampling_output_full_jaccard.u, a
   geom_tile() +
   #geom_text(aes(label= signif(slope_SD,2)),  size =3) +
   scale_fill_gradientn(colors = c("#FEFFD5","yellow","orange","darkred","#660000"),
-                       labels = c("0","","0.004","","0.008"),
+                       labels = c("0","0.002","0.004","0.006","0.008"),
                        breaks = seq(0.000,0.008,0.002),
                        guide = guide_colorbar(frame.colour = "black", ticks.colour = NA,
                                               title.position = "top",
@@ -1175,39 +1182,39 @@ ggsave(heatmap_year_obs_slope_SD_jaccard, path = file.path("Figures","Supplement
 
 #CHECK SIGNIFICANCE
 
-f3_d5_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_turnover_mean~year,
+f3_d5_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_total_mean~year,
                                                        EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))[2],2)
 
-f3_d5_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year,
+f3_d5_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_total_mean~year,
                                                     EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),]))$coefficients[2,4],2)
 
 
 subsample_viz_f3_d5_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),], 
-            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black",linetype = "longdash", method = "lm", se = F) +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+            aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black",linetype = "longdash", method = "lm", se = F) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1991,1994,1996),],
-             aes(x = year, y = jaccard_dissimilarity_turnover_mean), size = 3) +
+             aes(x = year, y = jaccard_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   # geom_text(aes(x = 1989, y = 0.43, label = paste0("3 obs over 5 years    ","Slope = ",f3_d5_slope,"\np-value = ",f3_d5_p_value)), size= 3) +
   ggtitle(paste0("3 obs over 5 years      ","slope = ",f3_d5_slope_jaccard,"      p-value = ",f3_d5_p_value_jaccard)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f10_d20_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_turnover_mean~year,
+f10_d20_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_total_mean~year,
                                                          EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))[2],2)
 
-f10_d20_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year,
+f10_d20_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_total_mean~year,
                                                       EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),]))$coefficients[2,4],2)
 
 subsample_viz_f10_d20_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),], 
-            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black",linetype ="solid", se = F, method = "lm") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+            aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black",linetype ="solid", se = F, method = "lm") +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1992, 1993, 1995, 2000, 2001, 2003, 2008, 2009, 2011, 2012),],
-             aes(x = year, y = jaccard_dissimilarity_turnover_mean), size = 3) +
+             aes(x = year, y = jaccard_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   #  geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f10_d20_slope,"\np-value = ",f10_d20_p_value)), size= 3) +
   ggtitle(paste0("10 obs over 20 years      ","slope = ",f10_d20_slope_jaccard,"      p-value = ",f10_d20_p_value_jaccard)) +
@@ -1216,39 +1223,39 @@ subsample_viz_f10_d20_jaccard <-  ggplot() +
 
 
 
-f30_d30_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_turnover_mean~year,
+f30_d30_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_total_mean~year,
                                                          EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))[2],2)
 
-f30_d30_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year,
+f30_d30_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_total_mean~year,
                                                       EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),]))$coefficients[2,4],2)
 
 subsample_viz_f30_d30_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),], 
-            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black", linetype = "solid", method = "lm", se = F) +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+            aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black", linetype = "solid", method = "lm", se = F) +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% seq(1984,2014,1),],
-             aes(x = year, y = jaccard_dissimilarity_turnover_mean), size = 3) +
+             aes(x = year, y = jaccard_dissimilarity_total_mean), size = 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("30 obs over 30 years      ","slope = ",f30_d30_slope_jaccard,"      p-value = ",f30_d30_p_value_jaccard)) +
   theme_classic() +
   theme(legend.position = "null", plot.title = element_text(size = 14))
 
-f2_d30_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_turnover_mean~year,
+f2_d30_slope_jaccard <- signif(coefficients(lm(jaccard_dissimilarity_total_mean~year,
                                                         EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))[2],2)
 
-f2_d30_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_turnover_mean~year,
+f2_d30_p_value_jaccard <- signif(summary(lm(jaccard_dissimilarity_total_mean~year,
                                                      EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),]))$coefficients[2,4],2)
 
 
 
 subsample_viz_f2_d30_jaccard <-  ggplot() +
   geom_smooth(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),], 
-            aes(x = year, y = jaccard_dissimilarity_turnover_mean), color = "black",linetype = "dashed", se = F, method = "lm") +
-  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_turnover_mean), shape = 21, fill = "white", color = "black",  size = 3) +
+            aes(x = year, y = jaccard_dissimilarity_total_mean), color = "black",linetype = "dashed", se = F, method = "lm") +
+  geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full",], aes(x = year, y = jaccard_dissimilarity_total_mean), shape = 21, fill = "white", color = "black",  size = 3) +
   labs(x = "Year", y = "β diversity") +
   geom_point(data = EBS.distances_dissimilarities_allyears[Domain == "Full" & year %in% c(1985,2015),],
-             aes(x = year, y = jaccard_dissimilarity_turnover_mean), size = 3) +
+             aes(x = year, y = jaccard_dissimilarity_total_mean), size = 3) +
   #geom_text(aes(x = 1989, y = 0.43, label = paste0("Slope = ",f2_d30_slope,"\np-value = NA")), size= 3) +
   labs(x = "Year", y = "β diversity") +
   ggtitle(paste0("2 obs over 30 years      ","slope = ",f2_d30_slope_jaccard,"      p-value = NA")) +
@@ -1305,3 +1312,4 @@ subsample_heatmap_viz_merge_jaccard <-
 
 ggsave(subsample_heatmap_viz_merge_jaccard,  path = file.path("Figures","Supplement","Jaccard"),
        filename = "subsample_heatmap_viz_merge_jaccard.jpg", height = 17, width = 16, units = "in")
+

@@ -30,26 +30,26 @@ library(cowplot)
 EBS.distances_dissimilarities_allyears <- fread(file.path("Output","EBS.distances_dissimilarities_allyears.csv"))
 
 
-#simplified for BC balanced variation only
+#simplified for total BC only
 
-EBS.dissim.simp <- EBS.distances_dissimilarities_allyears[,.(year, bray_curtis_dissimilarity_balanced_mean, domain)]
+EBS.dissim.simp <- EBS.distances_dissimilarities_allyears[,.(year, bray_curtis_dissimilarity_total_mean, domain)]
 
 
 #SUPPLEMENT
   #Biomass gradient
   EBS.dissim.simp.BC.gradient <- EBS.distances_dissimilarities_allyears[,.(year, bray_curtis_dissimilarity_gradient_mean, domain)]
   #Jaccard
-  EBS.dissim.simp.Jaccard.turnover <- EBS.distances_dissimilarities_allyears[,.(year, jaccard_dissimilarity_turnover_mean, domain)]
+  EBS.dissim.simp.Jaccard.total <- EBS.distances_dissimilarities_allyears[,.(year, jaccard_dissimilarity_total_mean, domain)]
   
 
 
 
 # next we need a function that runs a simple linear model of x=year, y=response variable
 
-linefit<-function (data, linear_model = "lm", level = 0.95, beta_term = "bray_curtis_dissimilarity_balanced_mean"){
+linefit<-function (data, linear_model = "lm", level = 0.95, beta_term = "bray_curtis_dissimilarity_total_mean"){
   #fit the model
   if(linear_model == "theil_sen_regression"){
-  model<-eval(call(linear_model, bray_curtis_dissimilarity_balanced_mean~year, data=data))
+  model<-eval(call(linear_model, bray_curtis_dissimilarity_total_mean~year, data=data))
   #create a vector of relevant outputs. We want slope, error, P value
   }else{
   model<-eval(call(linear_model, data[[beta_term]]~year, data=data))
@@ -102,7 +102,7 @@ linefit(EBS.dissim.simp[domain == "Inner"], linear_model = "theil_sen_regression
 #then we want to discard the first row of the data set, and repeat until fewer than
 #the number of rows specified remains
 
-breakup<-function(data, window, linear_model = "lm",level = 0.95,beta_term = "bray_curtis_dissimilarity_balanced_mean"){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
+breakup<-function(data, window, linear_model = "lm",level = 0.95,beta_term = "bray_curtis_dissimilarity_total_mean"){ #window is the size of the window we want to use, linear_model could be however we want to regress year~dissimilarity
   remaining<-data #create dummy data set to operate on
   output<-data.frame(year=integer(0), #create empty data frame to put our output variables in
                      length=integer(0), 
@@ -150,7 +150,7 @@ breakup(EBS.dissim.simp[domain == "Middle"], 3, linear_model = "theil_sen_regres
 
 # now time to write the function that will iterate through our targetted windows
 
-multiple_breakups<-function(data, linear_model = "lm", level = 0.95, beta_term = "bray_curtis_dissimilarity_balanced_mean"){
+multiple_breakups<-function(data, linear_model = "lm", level = 0.95, beta_term = "bray_curtis_dissimilarity_total_mean"){
   count<-length(data$year)
   output<-data.frame(year=integer(0), #create empty data frame to put our output variables in
                      length=integer(0), 
@@ -317,7 +317,7 @@ ggsave(pyramid_plot_merge, path = file.path("Figures"),
 #the 95%. CI of the slope of the longest series, for a given window length, allow user to change level of significance
 
 
-stability_time <-function(data, min_percent=95, linear_model = "lm", significance = 0.05, level = 0.95, beta_term = "bray_curtis_dissimilarity_balanced_mean"){#returns a number 
+stability_time <-function(data, min_percent=95, linear_model = "lm", significance = 0.05, level = 0.95, beta_term = "bray_curtis_dissimilarity_total_mean"){#returns a number 
   test<-multiple_breakups(data, linear_model = linear_model, level = 0.95, beta_term = beta_term)
   count<-nrow(test)
   #compute mean and sd of longest series for vertical lines
@@ -549,7 +549,7 @@ proportion_wrong(EBS.dissim.simp[domain == "Middle"], significance = 0.05, linea
 #over all the unique window lengths. Will output a data frame with a window length and proportion
 #of outputs with slope that is not within 95% confidence level, plus average r square for that window length
 
-proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_balanced_mean"){#returns a single value between 0 and 1
+proportion_wrong_series<- function(data, significance=0.05, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_total_mean"){#returns a single value between 0 and 1
   test<-multiple_breakups(data, linear_model = linear_model, beta_term = beta_term)
   count<-nrow(test)
   true_slope<-test[count,4] #find the slope of the longest series
@@ -653,13 +653,13 @@ saveRDS(proportion_wrong_series_biomassgradient, file.path(
 
 
 #jaccard
-proportion_wrong_series_full_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_full_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.total[domain == "Full"], beta_term = "jaccard_dissimilarity_total_mean", significance = 0.05)
 proportion_wrong_series_full_lm_jaccard[,domain := "Full"][,linear_model := "lm"]
-proportion_wrong_series_inner_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_inner_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.total[domain == "Inner"], beta_term = "jaccard_dissimilarity_total_mean", significance = 0.05)
 proportion_wrong_series_inner_lm_jaccard[,domain := "Inner"][,linear_model := "lm"]
-proportion_wrong_series_outer_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_outer_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.total[domain == "Outer"], beta_term = "jaccard_dissimilarity_total_mean", significance = 0.05)
 proportion_wrong_series_outer_lm_jaccard[,domain := "Outer"][,linear_model := "lm"]
-proportion_wrong_series_middle_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], beta_term = "jaccard_dissimilarity_turnover_mean", significance = 0.05)
+proportion_wrong_series_middle_lm_jaccard <- proportion_wrong_series(EBS.dissim.simp.Jaccard.total[domain == "Middle"], beta_term = "jaccard_dissimilarity_total_mean", significance = 0.05)
 proportion_wrong_series_middle_lm_jaccard[,domain := "Middle"][,linear_model := "lm"]
 
 
@@ -750,7 +750,7 @@ wrongness_plot<-function(data, significance=0.05, min_percent=95, error_multiply
 }
 
 #simplify for figure 2
-wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm", point_color = "black", beta_term = "bray_curtis_dissimilarity_balanced_mean"){
+wrongness_plot_fig2<-function(data, significance=0.05, min_percent=95, error_multiplyer=1, title ="", linear_model = "lm", point_color = "black", beta_term = "bray_curtis_dissimilarity_total_mean"){
   threshold<-stability_time(data, min_percent, error_multiplyer, linear_model = linear_model, beta_term = beta_term)#find stability threshold
   wrongness<-proportion_wrong_series(data, significance, beta_term = beta_term, linear_model = linear_model)
   maxyears<-max(wrongness$window_length)
@@ -816,17 +816,17 @@ proportion_wrong_series_jaccard[,Domain := factor(domain, levels = c("Full","Out
   ggsave(wrongness_plot_outer_lm_biomassgradient_fig2, path = file.path("Figures", "Supplement","Biomass_gradient"), filename = "wrongness_plot_outer_lm_biomassgradient_fig2.jpg")
   
   #jaccard
-  wrongness_plot_full_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], title="Full EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05)
-  ggsave(wrongness_plot_full_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_full_lm_jaccard_turnover_fig2.jpg")
+  wrongness_plot_full_lm_jaccard_total_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.total[domain == "Full"], title="Full EBS, lm()", beta_term = "jaccard_dissimilarity_total_mean", significance=0.05)
+  ggsave(wrongness_plot_full_lm_jaccard_total_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_full_lm_jaccard_total_fig2.jpg")
   
-  wrongness_plot_inner_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], title="Inner EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05, point_color = "#AA4499")
-  ggsave(wrongness_plot_inner_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_inner_lm_jaccard_turnover_fig2.jpg")
+  wrongness_plot_inner_lm_jaccard_total_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.total[domain == "Inner"], title="Inner EBS, lm()", beta_term = "jaccard_dissimilarity_total_mean", significance=0.05, point_color = "#AA4499")
+  ggsave(wrongness_plot_inner_lm_jaccard_total_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_inner_lm_jaccard_total_fig2.jpg")
   
-  wrongness_plot_middle_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], title="Middle EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean", significance=0.05, point_color = "#44AA99")
-  ggsave(wrongness_plot_middle_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_middle_lm_jaccard_turnover_fig2.jpg")
+  wrongness_plot_middle_lm_jaccard_total_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.total[domain == "Middle"], title="Middle EBS, lm()", beta_term = "jaccard_dissimilarity_total_mean", significance=0.05, point_color = "#44AA99")
+  ggsave(wrongness_plot_middle_lm_jaccard_total_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_middle_lm_jaccard_total_fig2.jpg")
   
-  wrongness_plot_outer_lm_jaccard_turnover_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], title="Outer EBS, lm()", beta_term = "jaccard_dissimilarity_turnover_mean" ,significance=0.05, point_color = "#999933")
-  ggsave(wrongness_plot_outer_lm_jaccard_turnover_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_outer_lm_jaccard_turnover_fig2.jpg")
+  wrongness_plot_outer_lm_jaccard_total_fig2 <- wrongness_plot_fig2(EBS.dissim.simp.Jaccard.total[domain == "Outer"], title="Outer EBS, lm()", beta_term = "jaccard_dissimilarity_total_mean" ,significance=0.05, point_color = "#999933")
+  ggsave(wrongness_plot_outer_lm_jaccard_total_fig2, path = file.path("Figures", "Supplement","Jaccard"), filename = "wrongness_plot_outer_lm_jaccard_total_fig2.jpg")
   
   
 ################  
@@ -893,24 +893,24 @@ ggsave(wrongness_plot_merge, path = file.path("Figures"),
                                                                         ifelse(Domain == "Outer",stability_time(EBS.dissim.simp.BC.gradient[domain == "Outer"],beta_term = "bray_curtis_dissimilarity_gradient_mean"),NA))))]
   
   
-  proportion_wrong_series_jaccard[,long_term_stable := ifelse(Domain == "Full" ,stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], beta_term = "jaccard_dissimilarity_turnover_mean"),
-                                                          ifelse(Domain == "Inner" , stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Inner"], beta_term = "jaccard_dissimilarity_turnover_mean"),
-                                                                 ifelse(Domain == "Middle" , stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Middle"], beta_term = "jaccard_dissimilarity_turnover_mean"),
-                                                                        ifelse(Domain == "Outer" ,stability_time(EBS.dissim.simp.Jaccard.turnover[domain == "Outer"], beta_term = "jaccard_dissimilarity_turnover_mean"),NA))))]
+  proportion_wrong_series_jaccard[,long_term_stable := ifelse(Domain == "Full" ,stability_time(EBS.dissim.simp.Jaccard.total[domain == "Full"], beta_term = "jaccard_dissimilarity_total_mean"),
+                                                          ifelse(Domain == "Inner" , stability_time(EBS.dissim.simp.Jaccard.total[domain == "Inner"], beta_term = "jaccard_dissimilarity_total_mean"),
+                                                                 ifelse(Domain == "Middle" , stability_time(EBS.dissim.simp.Jaccard.total[domain == "Middle"], beta_term = "jaccard_dissimilarity_total_mean"),
+                                                                        ifelse(Domain == "Outer" ,stability_time(EBS.dissim.simp.Jaccard.total[domain == "Outer"], beta_term = "jaccard_dissimilarity_total_mean"),NA))))]
   
   
   #long term slopes
-  #slopes BC balanced
-  slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-  slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-  slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-  slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  #slopes BC total
+  slope_full <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer <- round(coefficients(lm(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
 
   #THEILSEN
-  slope_full_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-  slope_inner_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-  slope_middle_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-  slope_outer_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_balanced_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  slope_full_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer_theilsen <- round(coefficients(theil_sen_regression(bray_curtis_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
   
   #BIOMASSGRADIENT
   slope_full_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
@@ -919,10 +919,10 @@ ggsave(wrongness_plot_merge, path = file.path("Figures"),
   slope_outer_biomassgradient <- round(coefficients(lm(bray_curtis_dissimilarity_gradient_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
   
   #JACCARD
-  slope_full_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
-  slope_inner_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
-  slope_middle_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
-  slope_outer_jaccard <- round(coefficients(lm(jaccard_dissimilarity_turnover_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
+  slope_full_jaccard <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Full",]))[[2]],5)
+  slope_inner_jaccard <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Inner",]))[[2]],5)
+  slope_middle_jaccard <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Middle",]))[[2]],5)
+  slope_outer_jaccard <- round(coefficients(lm(jaccard_dissimilarity_total_mean~year, data = EBS.distances_dissimilarities_allyears[domain == "Outer",]))[[2]],5)
   
   
   
@@ -1130,7 +1130,7 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, 
   countsig<-nrow(out_sig)#count the number of rows in the set we want to plot
   out_not<-out[which(out$p_value>significance),]
   countnot<-nrow(out_not)#count the number of rows in the set we want to plot
-  plot<- ggplot(data, aes(x=year, y=bray_curtis_dissimilarity_balanced_mean)) +
+  plot<- ggplot(data, aes(x=year, y=bray_curtis_dissimilarity_total_mean)) +
     theme_classic()+geom_smooth(linetype=0, fill="lightblue1", method=lm, formula='y ~ x', 
                                 level=0.99)#99% confidence interval around longest series
   if(countnot>0){
@@ -1158,7 +1158,7 @@ broken_stick_plot<-function(data, title="", significance=0.05, window_length=3, 
 
 
 #SPECIFICALLY FOR FIGURE 1
-broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_length, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_balanced_mean"){
+broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_length, linear_model = "lm", beta_term = "bray_curtis_dissimilarity_total_mean"){
   out<-multiple_breakups(data, linear_model = linear_model,beta_term = beta_term)
   years<-length(unique(out$start_year))
   maxyears<-max(out$N_years)
@@ -1223,25 +1223,25 @@ broken_stick_plot_fig1<-function(data, title="", significance=0.05, window_lengt
 #for figure 1
 #REGULAR LINEAR REGRESSION
 #full EBS,  3 year window
-broken_stick_plot_w3_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", window_length = 3, title="3-year", significance=0.05)
+broken_stick_plot_w3_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", window_length = 3, title="3-year", significance=0.05)
 ggsave(broken_stick_plot_w3_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w3_full_lm_fig1.jpg")
 #and grob too
 saveRDS(broken_stick_plot_w3_full_lm_fig1, file.path("Figures","broken_stick_plot_w3_full_lm_fig1.Rds"))
 
 #full EBS,  10 year window
-broken_stick_plot_w10_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", window_length = 10, title="10-year", significance=0.05)
+broken_stick_plot_w10_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", window_length = 10, title="10-year", significance=0.05)
 ggsave(broken_stick_plot_w10_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w10_full_lm_fig1.jpg")
 #and grob too
 saveRDS(broken_stick_plot_w10_full_lm_fig1, file.path("Figures","broken_stick_plot_w10_full_lm_fig1.Rds"))
 
 #full EBS,  20 year window
-broken_stick_plot_w20_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", window_length = 20, title="20-year", significance=0.05)
+broken_stick_plot_w20_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", window_length = 20, title="20-year", significance=0.05)
 ggsave(broken_stick_plot_w20_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w20_full_lm_fig1.jpg")
 #and grob too
 saveRDS(broken_stick_plot_w20_full_lm_fig1, file.path("Figures","broken_stick_plot_w20_full_lm_fig1.Rds"))
 
 #full EBS,  35 year window
-broken_stick_plot_w35_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", window_length = 35, title="35-year", significance=0.05)
+broken_stick_plot_w35_full_lm_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", window_length = 35, title="35-year", significance=0.05)
 ggsave(broken_stick_plot_w35_full_lm_fig1, path = file.path("Figures"), filename = "broken_stick_plot_w35_full_lm_fig1.jpg")
 #and grob too
 saveRDS(broken_stick_plot_w35_full_lm_fig1,file.path("Figures","broken_stick_plot_w35_full_lm_fig1.Rds"))
@@ -1249,25 +1249,25 @@ saveRDS(broken_stick_plot_w35_full_lm_fig1,file.path("Figures","broken_stick_plo
 ##SUPPLEMENT
     #THEILSEN
     #full EBS,  3 year window
-    broken_stick_plot_w3_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", linear_model = "theil_sen_regression", window_length = 3, title="3-year", significance=0.05)
+    broken_stick_plot_w3_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", linear_model = "theil_sen_regression", window_length = 3, title="3-year", significance=0.05)
     ggsave(broken_stick_plot_w3_full_theilsen_fig1, path = file.path("Figures", "Supplement", "Theil_Sen"), filename = "broken_stick_plot_w3_full_theilsen_fig1.jpg")
     #and grob too
     saveRDS(broken_stick_plot_w3_full_theilsen_fig1, file.path("Figures", "Supplement", "Theil_Sen","broken_stick_plot_w3_full_theilsen_fig1.Rds"))
     
     #full EBS,  10 year window
-    broken_stick_plot_w10_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", linear_model = "theil_sen_regression", window_length = 10, title="10-year", significance=0.05)
+    broken_stick_plot_w10_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", linear_model = "theil_sen_regression", window_length = 10, title="10-year", significance=0.05)
     ggsave(broken_stick_plot_w10_full_theilsen_fig1, path = file.path("Figures", "Supplement", "Theil_Sen"), filename = "broken_stick_plot_w10_full_theilsen_fig1.jpg")
     #and grob too
     saveRDS(broken_stick_plot_w10_full_theilsen_fig1, file.path("Figures", "Supplement", "Theil_Sen","broken_stick_plot_w10_full_theilsen_fig1.Rds"))
     
     #full EBS,  20 year window
-    broken_stick_plot_w20_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", linear_model = "theil_sen_regression", window_length = 20, title="20-year", significance=0.05)
+    broken_stick_plot_w20_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", linear_model = "theil_sen_regression", window_length = 20, title="20-year", significance=0.05)
     ggsave(broken_stick_plot_w20_full_theilsen_fig1, path = file.path("Figures", "Supplement", "Theil_Sen"), filename = "broken_stick_plot_w20_full_theilsen_fig1.jpg")
     #and grob too
     saveRDS(broken_stick_plot_w20_full_theilsen_fig1, file.path("Figures", "Supplement", "Theil_Sen","broken_stick_plot_w20_full_theilsen_fig1.Rds"))
     
     #full EBS,  35 year window
-    broken_stick_plot_w35_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_balanced_mean", linear_model = "theil_sen_regression", window_length = 35, title="35-year", significance=0.05)
+    broken_stick_plot_w35_full_theilsen_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp[domain == "Full"], beta_term = "bray_curtis_dissimilarity_total_mean", linear_model = "theil_sen_regression", window_length = 35, title="35-year", significance=0.05)
     ggsave(broken_stick_plot_w35_full_theilsen_fig1, path = file.path("Figures", "Supplement", "Theil_Sen"), filename = "broken_stick_plot_w35_full_theilsen_fig1.jpg")
     #and grob too
     saveRDS(broken_stick_plot_w35_full_theilsen_fig1,file.path("Figures", "Supplement", "Theil_Sen","broken_stick_plot_w35_full_theilsen_fig1.Rds"))
@@ -1298,30 +1298,30 @@ saveRDS(broken_stick_plot_w35_full_lm_fig1,file.path("Figures","broken_stick_plo
     saveRDS(broken_stick_plot_w35_full_biomass_gradient_fig1,file.path("Figures", "Supplement", "Biomass_gradient","broken_stick_plot_w35_full_biomass_gradient_fig1.Rds"))
     
     
-    ###JACCARDTURNOVER
+    ###JACCARDtotal
     #full EBS,  3 year window
-    broken_stick_plot_w3_full_jaccard_turnover_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], linear_model = "lm", window_length = 3, title="3-year", significance=0.05, beta_term = "jaccard_dissimilarity_turnover_mean")
-    ggsave(broken_stick_plot_w3_full_jaccard_turnover_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w3_full_jaccard_turnover_fig1.jpg")
+    broken_stick_plot_w3_full_jaccard_total_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.total[domain == "Full"], linear_model = "lm", window_length = 3, title="3-year", significance=0.05, beta_term = "jaccard_dissimilarity_total_mean")
+    ggsave(broken_stick_plot_w3_full_jaccard_total_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w3_full_jaccard_total_fig1.jpg")
     #and grob too
-    saveRDS(broken_stick_plot_w3_full_jaccard_turnover_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w3_full_jaccard_turnover_fig1.Rds"))
+    saveRDS(broken_stick_plot_w3_full_jaccard_total_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w3_full_jaccard_total_fig1.Rds"))
     
     #full EBS,  10 year window
-    broken_stick_plot_w10_full_jaccard_turnover_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], linear_model = "lm", window_length = 10, title="10-year", significance=0.05, beta_term = "jaccard_dissimilarity_turnover_mean")
-    ggsave(broken_stick_plot_w10_full_jaccard_turnover_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w10_full_jaccard_turnover_fig1.jpg")
+    broken_stick_plot_w10_full_jaccard_total_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.total[domain == "Full"], linear_model = "lm", window_length = 10, title="10-year", significance=0.05, beta_term = "jaccard_dissimilarity_total_mean")
+    ggsave(broken_stick_plot_w10_full_jaccard_total_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w10_full_jaccard_total_fig1.jpg")
     #and grob too
-    saveRDS(broken_stick_plot_w10_full_jaccard_turnover_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w10_full_jaccard_turnover_fig1.Rds"))
+    saveRDS(broken_stick_plot_w10_full_jaccard_total_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w10_full_jaccard_total_fig1.Rds"))
     
     #full EBS,  20 year window
-    broken_stick_plot_w20_full_jaccard_turnover_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], linear_model = "lm", window_length = 20, title="20-year", significance=0.05, beta_term = "jaccard_dissimilarity_turnover_mean")
-    ggsave(broken_stick_plot_w20_full_jaccard_turnover_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w20_full_jaccard_turnover_fig1.jpg")
+    broken_stick_plot_w20_full_jaccard_total_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.total[domain == "Full"], linear_model = "lm", window_length = 20, title="20-year", significance=0.05, beta_term = "jaccard_dissimilarity_total_mean")
+    ggsave(broken_stick_plot_w20_full_jaccard_total_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w20_full_jaccard_total_fig1.jpg")
     #and grob too
-    saveRDS(broken_stick_plot_w20_full_jaccard_turnover_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w20_full_jaccard_turnover_fig1.Rds"))
+    saveRDS(broken_stick_plot_w20_full_jaccard_total_fig1, file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w20_full_jaccard_total_fig1.Rds"))
     
     #full EBS,  35 year window
-    broken_stick_plot_w35_full_jaccard_turnover_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.turnover[domain == "Full"], linear_model = "lm", window_length = 35, title="35-year", significance=0.05, beta_term = "jaccard_dissimilarity_turnover_mean")
-    ggsave(broken_stick_plot_w35_full_jaccard_turnover_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w35_full_jaccard_turnover_fig1.jpg")
+    broken_stick_plot_w35_full_jaccard_total_fig1 <- broken_stick_plot_fig1(EBS.dissim.simp.Jaccard.total[domain == "Full"], linear_model = "lm", window_length = 35, title="35-year", significance=0.05, beta_term = "jaccard_dissimilarity_total_mean")
+    ggsave(broken_stick_plot_w35_full_jaccard_total_fig1, path = file.path("Figures", "Supplement", "Jaccard"), filename = "broken_stick_plot_w35_full_jaccard_total_fig1.jpg")
     #and grob too
-    saveRDS(broken_stick_plot_w35_full_jaccard_turnover_fig1,file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w35_full_jaccard_turnover_fig1.Rds"))
+    saveRDS(broken_stick_plot_w35_full_jaccard_total_fig1,file.path("Figures", "Supplement", "Jaccard","broken_stick_plot_w35_full_jaccard_total_fig1.Rds"))
     
     
     
